@@ -1,7 +1,7 @@
 package io.github.tunnelvisionmod.tunnelvision.mixin;
 
-import io.github.tunnelvisionmod.tunnelvision.events.EntityDeathEvent;
-import io.github.tunnelvisionmod.tunnelvision.events.EventBus;
+import io.github.tunnelvisionmod.tunnelvision.core.events.EntityDeathEvent;
+import io.github.tunnelvisionmod.tunnelvision.core.events.EventBus;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.game.ClientboundEntityEventPacket;

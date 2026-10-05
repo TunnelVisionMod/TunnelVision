@@ -1,6 +1,6 @@
 package io.github.tunnelvisionmod.tunnelvision.utils
 
-import io.github.tunnelvisionmod.tunnelvision.events.LocationChangedEvent
+import io.github.tunnelvisionmod.tunnelvision.core.events.LocationChangedEvent
 
 /**
  * Tells an actual move apart from Hypixel repeating the location packet for the place you are in.

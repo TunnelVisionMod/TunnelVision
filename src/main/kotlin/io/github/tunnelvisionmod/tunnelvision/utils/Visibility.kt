@@ -1,12 +1,12 @@
 package io.github.tunnelvisionmod.tunnelvision.utils
 
 import io.github.tunnelvisionmod.tunnelvision.TunnelVision.mc
-import net.minecraft.world.level.ClipContext
-import net.minecraft.world.phys.HitResult
-import net.minecraft.world.phys.Vec3
 import kotlin.math.atan
 import kotlin.math.cos
 import kotlin.math.tan
+import net.minecraft.world.level.ClipContext
+import net.minecraft.world.phys.HitResult
+import net.minecraft.world.phys.Vec3
 
 object Visibility {
 	private const val HIT_TOLERANCE = 1.0

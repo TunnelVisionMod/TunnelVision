@@ -12,6 +12,7 @@ import com.mojang.blaze3d.vertex.VertexFormat
 import io.github.tunnelvisionmod.tunnelvision.TunnelVision
 import io.github.tunnelvisionmod.tunnelvision.TunnelVision.mc
 import io.github.tunnelvisionmod.tunnelvision.compat.Compat
+import kotlin.math.max
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext
 import net.minecraft.client.gui.Font
 import net.minecraft.client.renderer.RenderPipelines
@@ -23,7 +24,6 @@ import net.minecraft.resources.Identifier
 import net.minecraft.util.LightCoordsUtil
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
-import kotlin.math.max
 
 object WorldRender {
 	private const val LINE_WIDTH = 2f

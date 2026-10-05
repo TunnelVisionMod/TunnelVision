@@ -25,7 +25,7 @@
 		"modmenu": [
 			{
 				"adapter": "kotlin",
-				"value": "io.github.tunnelvisionmod.tunnelvision.config.ModMenuIntegration"
+				"value": "io.github.tunnelvisionmod.tunnelvision.core.config.ModMenuIntegration"
 			}
 		]
 	},
