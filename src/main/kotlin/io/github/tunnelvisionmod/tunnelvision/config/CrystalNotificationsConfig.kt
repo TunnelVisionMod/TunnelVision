@@ -40,6 +40,15 @@ class CrystalNotificationsConfig {
 
 	@Expose
 	@JvmField
+	@ConfigOption(
+		name = "Forge Gems",
+		desc = "Next to each crystal in the widget, show the cheaper gems to forge its Perfect with: 400x Fine on a buy order or 5x Flawless insta-bought. §bRequires §eForge Priority§b.",
+	)
+	@ConfigEditorBoolean
+	var forgeGems = true
+
+	@Expose
+	@JvmField
 	@ConfigOption(name = "Sound", desc = "Play a sound with these notifications.")
 	@ConfigEditorBoolean
 	var playSound = true
