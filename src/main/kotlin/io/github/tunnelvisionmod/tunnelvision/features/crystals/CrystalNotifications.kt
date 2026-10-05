@@ -10,6 +10,7 @@ import io.github.tunnelvisionmod.tunnelvision.events.EventBus
 import io.github.tunnelvisionmod.tunnelvision.events.LocationChangedEvent
 import io.github.tunnelvisionmod.tunnelvision.features.forge.ForgeParser
 import io.github.tunnelvisionmod.tunnelvision.utils.formatCoins
+import io.github.tunnelvisionmod.tunnelvision.hud.HudClickable
 import io.github.tunnelvisionmod.tunnelvision.hud.HudManager
 import io.github.tunnelvisionmod.tunnelvision.hud.HudPosition
 import io.github.tunnelvisionmod.tunnelvision.hud.HudWidget
@@ -284,17 +285,37 @@ object CrystalNotifications {
 	 * A crystal line, with what forging it is worth and a mark on the ones to forge now. The forge
 	 * slot is the scarce resource, so the most valuable crystals go in first.
 	 */
-	private fun forgeLine(pick: ForgePick): Component {
+	private fun forgeLine(pick: ForgePick, input: ForgeInput?): Pair<Component, IntRange?> {
 		val line = crystalName(pick.crystal)
-		pick.value?.let { line.append(Component.literal(" " + formatCoins(it)).withStyle(ChatFormatting.DARK_GRAY)) }
-		if (pick.forgeNow) line.append(Component.literal(" forge").withStyle(ChatFormatting.GREEN))
-		return line
+		pick.value?.let { line.append(separator()).append(Component.literal(formatCoins(it)).withStyle(ChatFormatting.GOLD)) }
+		var gems: IntRange? = null
+		if (input != null) {
+			line.append(separator())
+			val from = mc.font.width(line)
+			line.append(gemsText(input))
+			gems = from until mc.font.width(line)
+		}
+		if (pick.forgeNow) line.append(separator()).append(Component.literal("forge").withStyle(ChatFormatting.GREEN))
+		return line to gems
 	}
+
+	private fun separator(): Component = Component.literal(" · ").withStyle(ChatFormatting.DARK_GRAY)
+
+	private fun gemsText(input: ForgeInput): Component =
+		Component.literal("${input.amount}x ${input.displayName}").withStyle(input.color)
 
 	object Widget : HudWidget("crystals", "Crystals", HudPosition(0.02f, 0.45f)) {
 		override val isEnabled get() = config.enabled && config.widget
 
+		private var gemClicks: List<HudClickable> = emptyList()
+		override val clickables get() = gemClicks
+
 		override fun getLines(): List<Component> {
+			gemClicks = emptyList()
+			return buildLines()
+		}
+
+		private fun buildLines(): List<Component> {
 			if (!SkyBlock.isOnMiningIsland) return emptyList()
 			val carried = tracker.carried
 			val header = Component.literal("Crystals (" + carried.size + "/" + CrystalType.entries.size + ")")
@@ -307,13 +328,26 @@ object CrystalNotifications {
 			if (!config.forgePriority) return listOf(header) + carried.map { crystalName(it) }
 			// A missing Forges widget means unknown, not full, so nothing is marked to forge.
 			val openSlots = ForgeParser.parseStatus(TabList.lines)?.openSlots ?: 0
-			val ranked = ForgePriority.rank(carried, openSlots) { CrystalValue.of(it) }
-			return listOf(header) + ranked.map { forgeLine(it) }
+			val worths = carried.associateWith { CrystalValue.worthOf(it) }
+			val ranked = ForgePriority.rank(carried, openSlots) { worths[it]?.value }
+			val lines = mutableListOf<Component>(header)
+			val clicks = mutableListOf<HudClickable>()
+			for (pick in ranked) {
+				val input = if (config.forgeGems) worths[pick.crystal]?.input else null
+				val (line, gems) = forgeLine(pick, input)
+				if (input != null && gems != null) {
+					val command = "bz ${input.displayName} ${pick.crystal.displayName} Gemstone"
+					clicks += HudClickable(lines.size, gems.first, gems.last + 1, gemsText(input)) { mc.connection?.sendCommand(command) }
+				}
+				lines += line
+			}
+			gemClicks = clicks
+			return lines
 		}
 
 		override fun getExampleLines() = listOf(
 			Component.literal("Crystals (3/" + CrystalType.entries.size + ")").withStyle(ChatFormatting.AQUA),
-			crystalName(CrystalType.JASPER),
+			forgeLine(ForgePick(CrystalType.JASPER, 3_700_000.0, forgeNow = true), ForgeInput.FINE).first,
 			crystalName(CrystalType.RUBY),
 			crystalName(CrystalType.ONYX),
 		)
