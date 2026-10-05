@@ -1,7 +1,7 @@
 package io.github.tunnelvisionmod.tunnelvision.mixin;
 
-import io.github.tunnelvisionmod.tunnelvision.events.EventBus;
-import io.github.tunnelvisionmod.tunnelvision.events.RightClickEvent;
+import io.github.tunnelvisionmod.tunnelvision.core.events.EventBus;
+import io.github.tunnelvisionmod.tunnelvision.core.events.RightClickEvent;
 import net.minecraft.client.Minecraft;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

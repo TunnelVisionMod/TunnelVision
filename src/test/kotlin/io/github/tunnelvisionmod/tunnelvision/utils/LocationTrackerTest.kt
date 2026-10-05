@@ -1,6 +1,6 @@
 package io.github.tunnelvisionmod.tunnelvision.utils
 
-import io.github.tunnelvisionmod.tunnelvision.events.LocationChangedEvent
+import io.github.tunnelvisionmod.tunnelvision.core.events.LocationChangedEvent
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

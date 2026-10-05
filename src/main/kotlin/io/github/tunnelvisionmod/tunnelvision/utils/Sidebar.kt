@@ -1,8 +1,8 @@
 package io.github.tunnelvisionmod.tunnelvision.utils
 
 import io.github.tunnelvisionmod.tunnelvision.TunnelVision.mc
-import io.github.tunnelvisionmod.tunnelvision.events.ClientTickEvent
-import io.github.tunnelvisionmod.tunnelvision.events.EventBus
+import io.github.tunnelvisionmod.tunnelvision.core.events.ClientTickEvent
+import io.github.tunnelvisionmod.tunnelvision.core.events.EventBus
 import net.minecraft.world.scores.DisplaySlot
 
 /**

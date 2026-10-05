@@ -1,7 +1,7 @@
 package io.github.tunnelvisionmod.tunnelvision.utils
 
 import io.github.tunnelvisionmod.tunnelvision.TunnelVision
-import io.github.tunnelvisionmod.tunnelvision.config.ConfigManager
+import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
 
 object Debug {
 	fun log(message: () -> String) {

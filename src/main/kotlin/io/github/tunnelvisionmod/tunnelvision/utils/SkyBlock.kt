@@ -1,10 +1,10 @@
 package io.github.tunnelvisionmod.tunnelvision.utils
 
 import io.github.tunnelvisionmod.tunnelvision.TunnelVision.mc
-import io.github.tunnelvisionmod.tunnelvision.events.DisconnectEvent
-import io.github.tunnelvisionmod.tunnelvision.events.EventBus
-import io.github.tunnelvisionmod.tunnelvision.events.LocationChangedEvent
-import io.github.tunnelvisionmod.tunnelvision.events.post
+import io.github.tunnelvisionmod.tunnelvision.core.events.DisconnectEvent
+import io.github.tunnelvisionmod.tunnelvision.core.events.EventBus
+import io.github.tunnelvisionmod.tunnelvision.core.events.LocationChangedEvent
+import io.github.tunnelvisionmod.tunnelvision.core.events.post
 import net.hypixel.data.type.GameType
 import net.hypixel.modapi.HypixelModAPI
 import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket
