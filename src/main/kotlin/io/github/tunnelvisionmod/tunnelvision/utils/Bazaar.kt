@@ -25,6 +25,11 @@ object Bazaar {
 	@Volatile
 	private var nextFetch = 0L
 
+	/** Bumped on every successful load, so callers can cache work derived from prices. */
+	@Volatile
+	var generation: Int = 0
+		private set
+
 	fun price(productId: String): BazaarPrices? = prices[productId]
 
 	fun refreshIfStale() {

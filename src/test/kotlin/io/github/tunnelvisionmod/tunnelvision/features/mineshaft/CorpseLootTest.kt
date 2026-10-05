@@ -3,35 +3,37 @@ package io.github.tunnelvisionmod.tunnelvision.features.mineshaft
 import io.github.tunnelvisionmod.tunnelvision.config.LootMode
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class CorpseLootTest {
 	@Test
 	fun `lapis only always means lapis`() {
-		assertEquals(LootRule.LAPIS, CorpseLoot.rule(LootMode.LAPIS_ONLY, crystalsFull = false, shouldMine = true))
-		assertEquals(LootRule.LAPIS, CorpseLoot.rule(LootMode.LAPIS_ONLY, crystalsFull = true, shouldMine = false))
+		assertEquals(LootRule.LAPIS, CorpseLoot.rule(LootMode.LAPIS_ONLY, crystalsFull = false, shouldMine = true, openVanguards = true))
+		assertEquals(LootRule.LAPIS, CorpseLoot.rule(LootMode.LAPIS_ONLY, crystalsFull = true, shouldMine = false, openVanguards = true))
 	}
 
 	@Test
 	fun `greedy loots everything while crystals are not full`() {
-		assertEquals(LootRule.ALL, CorpseLoot.rule(LootMode.GREEDY, crystalsFull = false, shouldMine = false))
-		assertEquals(LootRule.ALL, CorpseLoot.rule(LootMode.GREEDY, crystalsFull = false, shouldMine = null))
+		assertEquals(LootRule.ALL, CorpseLoot.rule(LootMode.GREEDY, crystalsFull = false, shouldMine = false, openVanguards = true))
+		assertEquals(LootRule.ALL, CorpseLoot.rule(LootMode.GREEDY, crystalsFull = false, shouldMine = null, openVanguards = true))
 	}
 
 	@Test
 	fun `greedy with crystals full loots everything only in a shaft worth mining`() {
-		assertEquals(LootRule.ALL, CorpseLoot.rule(LootMode.GREEDY, crystalsFull = true, shouldMine = true))
-		assertEquals(LootRule.LAPIS_AND_VANGUARD, CorpseLoot.rule(LootMode.GREEDY, crystalsFull = true, shouldMine = false))
-		assertEquals(LootRule.LAPIS_AND_VANGUARD, CorpseLoot.rule(LootMode.GREEDY, crystalsFull = true, shouldMine = null))
+		assertEquals(LootRule.ALL, CorpseLoot.rule(LootMode.GREEDY, crystalsFull = true, shouldMine = true, openVanguards = true))
+		assertEquals(LootRule.LAPIS_AND_VANGUARD, CorpseLoot.rule(LootMode.GREEDY, crystalsFull = true, shouldMine = false, openVanguards = true))
+		assertEquals(LootRule.LAPIS_AND_VANGUARD, CorpseLoot.rule(LootMode.GREEDY, crystalsFull = true, shouldMine = null, openVanguards = true))
 	}
 
 	@Test
 	fun `normal loots everything only in a shaft worth mining, crystals or not`() {
 		for (crystalsFull in listOf(false, true)) {
-			assertEquals(LootRule.ALL, CorpseLoot.rule(LootMode.NORMAL, crystalsFull, shouldMine = true))
-			assertEquals(LootRule.LAPIS_AND_VANGUARD, CorpseLoot.rule(LootMode.NORMAL, crystalsFull, shouldMine = false))
-			assertEquals(LootRule.LAPIS_AND_VANGUARD, CorpseLoot.rule(LootMode.NORMAL, crystalsFull, shouldMine = null))
+			assertEquals(LootRule.ALL, CorpseLoot.rule(LootMode.NORMAL, crystalsFull, shouldMine = true, openVanguards = true))
+			assertEquals(LootRule.LAPIS_AND_VANGUARD, CorpseLoot.rule(LootMode.NORMAL, crystalsFull, shouldMine = false, openVanguards = true))
+			assertEquals(LootRule.LAPIS_AND_VANGUARD, CorpseLoot.rule(LootMode.NORMAL, crystalsFull, shouldMine = null, openVanguards = true))
 		}
 	}
 
@@ -65,5 +67,34 @@ class CorpseLootTest {
 		assertEquals("Umber Key", CorpseType.UMBER.keyName)
 		assertEquals("Tungsten Key", CorpseType.TUNGSTEN.keyName)
 		assertEquals("Skeleton Key", CorpseType.VANGUARD.keyName)
+	}
+
+	@Test
+	fun `vanguards drop out of every rule when we do not open them`() {
+		for (crystalsFull in listOf(false, true)) {
+			for (shouldMine in listOf(true, false, null)) {
+				for (mode in LootMode.entries) {
+					val rule = CorpseLoot.rule(mode, crystalsFull, shouldMine, openVanguards = false)
+					assertFalse(rule.includes(CorpseType.VANGUARD), "$mode $crystalsFull $shouldMine gave $rule")
+				}
+			}
+		}
+	}
+
+	@Test
+	fun `not opening vanguards still loots everything else in a shaft worth mining`() {
+		val rule = CorpseLoot.rule(LootMode.NORMAL, crystalsFull = false, shouldMine = true, openVanguards = false)
+		assertEquals(LootRule.ALL_BUT_VANGUARD, rule)
+		for (type in listOf(CorpseType.LAPIS, CorpseType.UMBER, CorpseType.TUNGSTEN)) {
+			assertTrue(rule.includes(type), type.tabName)
+		}
+	}
+
+	@Test
+	fun `greedy without vanguards loots everything else`() {
+		assertEquals(
+			LootRule.ALL_BUT_VANGUARD,
+			CorpseLoot.rule(LootMode.GREEDY, crystalsFull = false, shouldMine = false, openVanguards = false),
+		)
 	}
 }

@@ -54,6 +54,7 @@ object CorpsesToLoot {
 		mode = valueConfig.lootMode,
 		crystalsFull = CrystalNotifications.crystalsAndForgeFull,
 		shouldMine = MineshaftValueAlert.currentVerdict()?.shouldMine,
+		openVanguards = valueConfig.openVanguards,
 	)
 
 	private fun crystalShaft(): CrystalType? =

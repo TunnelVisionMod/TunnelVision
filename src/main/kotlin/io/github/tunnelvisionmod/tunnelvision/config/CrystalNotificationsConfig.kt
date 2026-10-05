@@ -31,6 +31,15 @@ class CrystalNotificationsConfig {
 
 	@Expose
 	@JvmField
+	@ConfigOption(
+		name = "Forge Priority",
+		desc = "In the widget, order the crystals you carry by what forging them is worth and mark the ones to put in your free forge slots.",
+	)
+	@ConfigEditorBoolean
+	var forgePriority = true
+
+	@Expose
+	@JvmField
 	@ConfigOption(name = "Sound", desc = "Play a sound with these notifications.")
 	@ConfigEditorBoolean
 	var playSound = true

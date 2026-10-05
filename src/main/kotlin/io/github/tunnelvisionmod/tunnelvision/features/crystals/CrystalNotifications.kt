@@ -9,6 +9,7 @@ import io.github.tunnelvisionmod.tunnelvision.events.DisconnectEvent
 import io.github.tunnelvisionmod.tunnelvision.events.EventBus
 import io.github.tunnelvisionmod.tunnelvision.events.LocationChangedEvent
 import io.github.tunnelvisionmod.tunnelvision.features.forge.ForgeParser
+import io.github.tunnelvisionmod.tunnelvision.utils.formatCoins
 import io.github.tunnelvisionmod.tunnelvision.hud.HudManager
 import io.github.tunnelvisionmod.tunnelvision.hud.HudPosition
 import io.github.tunnelvisionmod.tunnelvision.hud.HudWidget
@@ -279,6 +280,17 @@ object CrystalNotifications {
 		return text
 	}
 
+	/**
+	 * A crystal line, with what forging it is worth and a mark on the ones to forge now. The forge
+	 * slot is the scarce resource, so the most valuable crystals go in first.
+	 */
+	private fun forgeLine(pick: ForgePick): Component {
+		val line = crystalName(pick.crystal)
+		pick.value?.let { line.append(Component.literal(" " + formatCoins(it)).withStyle(ChatFormatting.DARK_GRAY)) }
+		if (pick.forgeNow) line.append(Component.literal(" forge").withStyle(ChatFormatting.GREEN))
+		return line
+	}
+
 	object Widget : HudWidget("crystals", "Crystals", HudPosition(0.02f, 0.45f)) {
 		override val isEnabled get() = config.enabled && config.widget
 
@@ -292,7 +304,11 @@ object CrystalNotifications {
 			}
 			if (carried.isEmpty()) return listOf(header, Component.literal("none").withStyle(ChatFormatting.GRAY))
 			// One crystal per line, so the widget stays narrow however many you are holding.
-			return listOf(header) + carried.map { crystalName(it) }
+			if (!config.forgePriority) return listOf(header) + carried.map { crystalName(it) }
+			// A missing Forges widget means unknown, not full, so nothing is marked to forge.
+			val openSlots = ForgeParser.parseStatus(TabList.lines)?.openSlots ?: 0
+			val ranked = ForgePriority.rank(carried, openSlots) { CrystalValue.of(it) }
+			return listOf(header) + ranked.map { forgeLine(it) }
 		}
 
 		override fun getExampleLines() = listOf(
