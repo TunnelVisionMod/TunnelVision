@@ -24,9 +24,4 @@ class WrongGearConfig {
 	@ConfigEditorBoolean
 	var showTitle = true
 
-	@Expose
-	@JvmField
-	@ConfigOption(name = "Warning Sound", desc = "Play a sound with the warning.")
-	@ConfigEditorBoolean
-	var playSound = true
 }

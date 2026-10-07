@@ -1,18 +1,17 @@
 package io.github.tunnelvisionmod.tunnelvision.features.mining.pristine
 
-import io.github.tunnelvisionmod.tunnelvision.TunnelVision.mc
-import io.github.tunnelvisionmod.tunnelvision.compat.Compat
 import io.github.tunnelvisionmod.tunnelvision.core.Feature
 import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
 import io.github.tunnelvisionmod.tunnelvision.core.events.ChatReceivedEvent
 import io.github.tunnelvisionmod.tunnelvision.core.events.EventBus
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSound
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSounds
 import io.github.tunnelvisionmod.tunnelvision.utils.ChatUtils
 import io.github.tunnelvisionmod.tunnelvision.utils.Debug
 import io.github.tunnelvisionmod.tunnelvision.utils.SkyBlock
+import io.github.tunnelvisionmod.tunnelvision.utils.Titles
 import net.minecraft.ChatFormatting
-import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.network.chat.Component
-import net.minecraft.sounds.SoundEvents
 
 /**
  * Warns when a Pristine proc drops fewer gemstones than it should, which means the wrong gear is
@@ -50,11 +49,9 @@ object WrongGearWarning : Feature {
 				),
 		)
 		if (config.showTitle) {
-			Compat.setTitleTimes(0, 20, 5)
-			Compat.setTitle(Component.literal("Wrong Gear!").withStyle(ChatFormatting.RED))
-		}
-		if (config.playSound) {
-			mc.soundManager.play(SimpleSoundInstance.forUI(SoundEvents.VILLAGER_NO, 1f))
+			Titles.show(Component.literal("Wrong Gear!").withStyle(ChatFormatting.RED), TitleSound.WRONG_GEAR, 0, 20, 5)
+		} else {
+			TitleSounds.play(TitleSound.WRONG_GEAR)
 		}
 	}
 }

@@ -17,9 +17,4 @@ class BlueCheeseCorpseLockConfig {
 	@ConfigEditorBoolean
 	var showTitle = true
 
-	@Expose
-	@JvmField
-	@ConfigOption(name = "Warning Sound", desc = "Play a sound when a click is blocked.")
-	@ConfigEditorBoolean
-	var playSound = true
 }

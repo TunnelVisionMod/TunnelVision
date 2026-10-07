@@ -1,21 +1,19 @@
 package io.github.tunnelvisionmod.tunnelvision.features.mining.lantern
 
 import io.github.tunnelvisionmod.tunnelvision.TunnelVision.mc
-import io.github.tunnelvisionmod.tunnelvision.compat.Compat
 import io.github.tunnelvisionmod.tunnelvision.core.Feature
 import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
 import io.github.tunnelvisionmod.tunnelvision.core.events.ChatReceivedEvent
 import io.github.tunnelvisionmod.tunnelvision.core.events.EventBus
 import io.github.tunnelvisionmod.tunnelvision.core.events.MineshaftEnteredEvent
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSound
 import io.github.tunnelvisionmod.tunnelvision.utils.ChatUtils
 import io.github.tunnelvisionmod.tunnelvision.utils.Debug
 import io.github.tunnelvisionmod.tunnelvision.utils.SkyBlock
 import io.github.tunnelvisionmod.tunnelvision.utils.Titles
 import io.github.tunnelvisionmod.tunnelvision.utils.plainName
 import net.minecraft.ChatFormatting
-import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.network.chat.Component
-import net.minecraft.sounds.SoundEvents
 import net.minecraft.world.entity.player.Inventory
 
 object LanternReminder : Feature {
@@ -41,8 +39,6 @@ object LanternReminder : Feature {
 		val lantern = Lantern.fromDespawnMessage(event.text) ?: return
 		Debug.log { "LanternReminder: $lantern despawned" }
 		val text = Component.literal("${lantern.itemName} expired!").withStyle(ChatFormatting.YELLOW)
-		Compat.setTitleTimes(0, 40, 10)
-		Compat.setTitle(text)
-		if (config.playSound) mc.soundManager.play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_PLING, 1f))
+		Titles.show(text, TitleSound.LANTERN_EXPIRED, 0, 40, 10)
 	}
 }

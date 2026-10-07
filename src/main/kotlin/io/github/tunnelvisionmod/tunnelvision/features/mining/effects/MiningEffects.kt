@@ -12,9 +12,11 @@ import io.github.tunnelvisionmod.tunnelvision.core.events.RightClickEvent
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudManager
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudPosition
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudWidget
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSound
 import io.github.tunnelvisionmod.tunnelvision.utils.Debug
 import io.github.tunnelvisionmod.tunnelvision.utils.SkyBlock
 import io.github.tunnelvisionmod.tunnelvision.utils.TabList
+import io.github.tunnelvisionmod.tunnelvision.utils.Titles
 import io.github.tunnelvisionmod.tunnelvision.utils.formatDuration
 import io.github.tunnelvisionmod.tunnelvision.utils.loreLines
 import io.github.tunnelvisionmod.tunnelvision.utils.plainName
@@ -75,8 +77,7 @@ object MiningEffects : Feature {
 	private fun onExpired(effect: MiningEffect) {
 		Debug.log { "MiningEffects: ${effect.displayName} expired" }
 		if (!config.showExpiredTitle || !SkyBlock.isOnMiningIsland) return
-		Compat.setTitleTimes(0, 50, 10)
-		Compat.setTitle(Component.literal("${effect.displayName} expired!").withStyle(ChatFormatting.RED))
+		Titles.show(Component.literal("${effect.displayName} expired!").withStyle(ChatFormatting.RED), TitleSound.MINING_EFFECT_EXPIRED, 0, 50, 10)
 	}
 
 	private fun onChat(event: ChatReceivedEvent) {
