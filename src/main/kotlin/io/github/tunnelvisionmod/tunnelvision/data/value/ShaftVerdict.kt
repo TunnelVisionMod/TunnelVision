@@ -1,7 +1,6 @@
 package io.github.tunnelvisionmod.tunnelvision.data.value
 
 import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
-import io.github.tunnelvisionmod.tunnelvision.core.config.LootMode
 import io.github.tunnelvisionmod.tunnelvision.core.events.EventBus
 import io.github.tunnelvisionmod.tunnelvision.core.events.LocationChangedEvent
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalState
@@ -52,31 +51,23 @@ object ShaftVerdict {
 	private fun decide(): MineshaftVerdict? {
 		val type = MineshaftState.type ?: return null
 		val corpses = corpses() ?: return null
-		val mode = loot.lootMode
 		return MineshaftValue.evaluate(
 			type = type,
 			corpses = corpses,
 			priceType = ConfigManager.config.general.bazaarPrice,
-			mode = mode,
-			crystalsFull = mode == LootMode.NORMAL || CrystalState.corpseCrystalsCarried,
+			mode = loot.lootMode,
+			crystalsFull = CrystalState.corpseCrystalsCarried,
 			openVanguards = loot.openVanguards,
-			lockedCrystals = lockedCrystals(mode),
+			lockedCrystals = lockedCrystals(),
 		)
 	}
 
 	/**
 	 * The crystals we already carry, which therefore cannot drop from a corpse. Until the Heart of the
 	 * Mountain menu has been read we do not know, and assume none are locked.
-	 *
-	 * Normal is Greedy with every crystal already carried, so it rates shafts as if none can drop.
-	 * Otherwise the crystal chance in Umber and Tungsten corpses - which Normal only opens in a shaft
-	 * it mines - would talk it into mining shafts whose gems are not worth it.
 	 */
-	private fun lockedCrystals(mode: LootMode): Set<CrystalType> = when {
-		mode == LootMode.NORMAL -> CrystalType.entries.toSet()
-		CrystalState.known -> CrystalState.carried
-		else -> emptySet()
-	}
+	private fun lockedCrystals(): Set<CrystalType> =
+		if (CrystalState.known) CrystalState.carried else emptySet()
 
 	/**
 	 * Every corpse in the shaft, looted or not. A shaft is worth what it was worth when you walked in,

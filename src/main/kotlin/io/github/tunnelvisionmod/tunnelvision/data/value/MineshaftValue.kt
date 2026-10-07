@@ -146,7 +146,7 @@ object MineshaftValue {
 	): MineshaftVerdict? {
 		val gemstone = GemstoneShaft.of(type) ?: return null
 		val finePrice = Bazaar.price(gemstone.fineGemId)?.let { priceType.of(it) } ?: return null
-		val rate = longRunRate(priceType, mode, openVanguards) ?: return null
+		val rate = longRunRate(priceType, mode, crystalsFull, openVanguards, lockedCrystals) ?: return null
 		val mineRule = mineRule(mode, crystalsFull, openVanguards)
 		val total = corpses.values.sum()
 		// Only a corpse we open gives its Pristine, so Lapis Only gets it from the Lapis ones alone.
@@ -204,21 +204,25 @@ object MineshaftValue {
 	/**
 	 * The coins per second the leave-and-respawn loop earns, cached per Bazaar refresh.
 	 *
-	 * Rated as if every crystal is carried, whatever you hold today. The crystals you are missing are
-	 * a one-off batch that mining a good shaft first only postpones, and the forge caps how many you
-	 * can turn into coins anyway - counting them as income in every future shaft would set a bar
-	 * that even a Jasper shaft cannot clear while you are still collecting them.
+	 * Greedy is rated as if every crystal is carried, whatever you hold today: it opens every corpse
+	 * while crystals are missing, so counting their crystals as income in every future shaft set a bar
+	 * that even a Jasper shaft could not clear. Normal keeps the crystals you really carry. That bar
+	 * runs high while crystals are missing, which makes Normal skip more and reach the crystal
+	 * mineshafts sooner - simulated, that earned more than the steady-state bar did.
 	 */
-	fun longRunRate(priceType: BazaarPriceType, mode: LootMode, openVanguards: Boolean): Double? =
-		longRunRate(
-			Inputs(
-				priceType = priceType,
-				mode = mode,
-				crystalsFull = true,
-				openVanguards = openVanguards,
-				lockedCrystals = CrystalType.entries.toSet(),
-			),
-		)
+	fun longRunRate(
+		priceType: BazaarPriceType,
+		mode: LootMode,
+		crystalsFull: Boolean,
+		openVanguards: Boolean,
+		lockedCrystals: Set<CrystalType> = emptySet(),
+	): Double? = longRunRate(
+		if (mode == LootMode.GREEDY) {
+			Inputs(priceType, mode, crystalsFull = true, openVanguards, lockedCrystals = CrystalType.entries.toSet())
+		} else {
+			Inputs(priceType, mode, crystalsFull, openVanguards, lockedCrystals)
+		},
+	)
 
 	private fun longRunRate(inputs: Inputs): Double? {
 		val key = CacheKey(Bazaar.generation, inputs)
