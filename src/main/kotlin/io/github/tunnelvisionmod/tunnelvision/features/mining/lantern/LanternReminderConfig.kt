@@ -23,9 +23,4 @@ class LanternReminderConfig {
 	@ConfigEditorBoolean
 	var expiredAlert = true
 
-	@Expose
-	@JvmField
-	@ConfigOption(name = "Sound", desc = "Play a sound when your lantern despawns.")
-	@ConfigEditorBoolean
-	var playSound = true
 }

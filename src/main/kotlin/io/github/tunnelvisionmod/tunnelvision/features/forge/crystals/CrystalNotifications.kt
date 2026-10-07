@@ -1,7 +1,6 @@
 package io.github.tunnelvisionmod.tunnelvision.features.forge.crystals
 
 import io.github.tunnelvisionmod.tunnelvision.TunnelVision.mc
-import io.github.tunnelvisionmod.tunnelvision.compat.Compat
 import io.github.tunnelvisionmod.tunnelvision.core.Feature
 import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
 import io.github.tunnelvisionmod.tunnelvision.core.events.ClientTickEvent
@@ -12,6 +11,8 @@ import io.github.tunnelvisionmod.tunnelvision.core.hud.HudClickable
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudManager
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudPosition
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudWidget
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSound
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSounds
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalState
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalType
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalValue
@@ -21,12 +22,11 @@ import io.github.tunnelvisionmod.tunnelvision.utils.ChatUtils
 import io.github.tunnelvisionmod.tunnelvision.utils.Debug
 import io.github.tunnelvisionmod.tunnelvision.utils.SkyBlock
 import io.github.tunnelvisionmod.tunnelvision.utils.TabList
+import io.github.tunnelvisionmod.tunnelvision.utils.Titles
 import io.github.tunnelvisionmod.tunnelvision.utils.formatCoins
 import net.minecraft.ChatFormatting
-import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.network.chat.Component
 import net.minecraft.network.chat.MutableComponent
-import net.minecraft.sounds.SoundEvents
 
 /**
  * Two notifications about crystals waiting to be forged, plus a widget listing what you carry:
@@ -104,11 +104,8 @@ object CrystalNotifications : Feature {
 	private fun announceAvailable(carried: Set<CrystalType>) {
 		if (!config.enabled || !config.availableTitle) return
 		Debug.log { "Crystals: available " + carried.map { it.displayName } }
-		Compat.setTitleTimes(0, 60, 10)
 		// The crystals move to the subtitle: the title says what to do, the subtitle says with what.
-		Compat.setSubtitle(crystalNames(carried))
-		Compat.setTitle(Component.literal("Forge Crystal").withStyle(ChatFormatting.GOLD))
-		playSound()
+		Titles.show(Component.literal("Forge Crystal").withStyle(ChatFormatting.GOLD), TitleSound.FORGE_CRYSTAL, 0, 60, 10, crystalNames(carried))
 	}
 
 	private fun checkCrystalsFull() {
@@ -122,12 +119,7 @@ object CrystalNotifications : Feature {
 		Debug.log { "Crystals: all crystals carried and forge full" }
 		if (!config.enabled || !config.fullMessage) return
 		ChatUtils.send(Component.literal("Crystals full").withStyle(ChatFormatting.AQUA))
-		playSound()
-	}
-
-	private fun playSound() {
-		if (!config.playSound) return
-		mc.soundManager.play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_PLING, 1f))
+		TitleSounds.play(TitleSound.CRYSTALS_FULL)
 	}
 
 	/** One crystal name, in its own colour. */

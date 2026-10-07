@@ -47,9 +47,4 @@ class CrystalNotificationsConfig {
 	@ConfigEditorBoolean
 	var forgeGems = true
 
-	@Expose
-	@JvmField
-	@ConfigOption(name = "Sound", desc = "Play a sound with these notifications.")
-	@ConfigEditorBoolean
-	var playSound = true
 }

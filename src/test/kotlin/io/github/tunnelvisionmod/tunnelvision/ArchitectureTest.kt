@@ -63,4 +63,13 @@ class ArchitectureTest {
 		}
 		assertEquals(emptyList<String>(), violations)
 	}
+
+	@Test
+	fun `titles only go through Titles`() {
+		val direct = Regex("""Compat\.set(Title|Subtitle|TitleTimes)\(""")
+		val allowed = setOf("utils/Titles.kt")
+		val violations = sources().filter { (path, text) -> path.joinToString("/") !in allowed && direct.containsMatchIn(text) }
+			.map { (path, _) -> "${path.joinToString("/")} shows a title without a TitleSound" }
+		assertEquals(emptyList<String>(), violations)
+	}
 }

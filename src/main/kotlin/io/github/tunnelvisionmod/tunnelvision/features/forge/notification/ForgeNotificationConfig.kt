@@ -23,9 +23,4 @@ class ForgeNotificationConfig {
 	@ConfigEditorBoolean
 	var sendChat = true
 
-	@Expose
-	@JvmField
-	@ConfigOption(name = "Ready Sound", desc = "Play a sound when something in your Forge is done.")
-	@ConfigEditorBoolean
-	var playSound = true
 }

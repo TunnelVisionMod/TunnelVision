@@ -8,6 +8,8 @@ import io.github.tunnelvisionmod.tunnelvision.core.events.ChatReceivedEvent
 import io.github.tunnelvisionmod.tunnelvision.core.events.ClientTickEvent
 import io.github.tunnelvisionmod.tunnelvision.core.events.EventBus
 import io.github.tunnelvisionmod.tunnelvision.core.events.LocationChangedEvent
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSound
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSounds
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.MineshaftRole
 import io.github.tunnelvisionmod.tunnelvision.data.party.OwnWarpGuard
 import io.github.tunnelvisionmod.tunnelvision.data.party.PartyChatParser
@@ -15,10 +17,9 @@ import io.github.tunnelvisionmod.tunnelvision.utils.ChatUtils
 import io.github.tunnelvisionmod.tunnelvision.utils.Debug
 import io.github.tunnelvisionmod.tunnelvision.utils.KeyUtils
 import io.github.tunnelvisionmod.tunnelvision.utils.SkyBlock
+import io.github.tunnelvisionmod.tunnelvision.utils.Titles
 import net.minecraft.ChatFormatting
-import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.network.chat.Component
-import net.minecraft.sounds.SoundEvents
 
 object SharedMineshaftWarp : Feature {
 	private val config get() = ConfigManager.config.party.sharedMineshaftWarp
@@ -59,9 +60,10 @@ object SharedMineshaftWarp : Feature {
 		}
 		val name = "${shared.type.displayName} Mineshaft"
 		if (config.showTitle) {
-			Compat.setTitleTimes(0, 60, 10)
-			Compat.setSubtitle(Component.literal(hint).withStyle(ChatFormatting.YELLOW))
-			Compat.setTitle(Component.literal(name).withStyle(shared.type.color))
+			val subtitle = Component.literal(hint).withStyle(ChatFormatting.YELLOW)
+			Titles.show(Component.literal(name).withStyle(shared.type.color), TitleSound.SHARED_MINESHAFT, 0, 60, 10, subtitle)
+		} else {
+			TitleSounds.play(TitleSound.SHARED_MINESHAFT)
 		}
 		val corpses = shared.corpses?.let { " ($it)" } ?: ""
 		ChatUtils.send(
@@ -70,8 +72,5 @@ object SharedMineshaftWarp : Feature {
 				.append(Component.literal("$corpses. ").withStyle(ChatFormatting.GRAY))
 				.append(Component.literal(hint).withStyle(ChatFormatting.YELLOW))
 		)
-		if (config.playSound) {
-			mc.soundManager.play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_PLING, 1f))
-		}
 	}
 }

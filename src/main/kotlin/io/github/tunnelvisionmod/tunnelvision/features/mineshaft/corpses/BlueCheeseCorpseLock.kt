@@ -1,19 +1,19 @@
 package io.github.tunnelvisionmod.tunnelvision.features.mineshaft.corpses
 
 import io.github.tunnelvisionmod.tunnelvision.TunnelVision.mc
-import io.github.tunnelvisionmod.tunnelvision.compat.Compat
 import io.github.tunnelvisionmod.tunnelvision.core.Feature
 import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
 import io.github.tunnelvisionmod.tunnelvision.core.events.EventBus
 import io.github.tunnelvisionmod.tunnelvision.core.events.RightClickEvent
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSound
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSounds
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.CorpseType
 import io.github.tunnelvisionmod.tunnelvision.utils.Debug
 import io.github.tunnelvisionmod.tunnelvision.utils.SkyBlock
+import io.github.tunnelvisionmod.tunnelvision.utils.Titles
 import io.github.tunnelvisionmod.tunnelvision.utils.customData
 import net.minecraft.ChatFormatting
-import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.network.chat.Component
-import net.minecraft.sounds.SoundEvents
 import net.minecraft.world.entity.decoration.ArmorStand
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.item.ItemStack
@@ -58,11 +58,9 @@ object BlueCheeseCorpseLock : Feature {
 		lastWarning = now
 		Debug.log { "BlueCheeseCorpseLock: blocked looting $corpse corpse while not holding blue cheese drill" }
 		if (config.showTitle) {
-			Compat.setTitleTimes(0, 20, 5)
-			Compat.setTitle(Component.literal("Blue Cheese!").withStyle(ChatFormatting.RED))
-		}
-		if (config.playSound) {
-			mc.soundManager.play(SimpleSoundInstance.forUI(SoundEvents.VILLAGER_NO, 1f))
+			Titles.show(Component.literal("Blue Cheese!").withStyle(ChatFormatting.RED), TitleSound.BLUE_CHEESE, 0, 20, 5)
+		} else {
+			TitleSounds.play(TitleSound.BLUE_CHEESE)
 		}
 	}
 }

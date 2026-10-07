@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
 import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudManager
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSounds
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalState
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalType
 import io.github.tunnelvisionmod.tunnelvision.features.forge.crystals.CrystalNotifications
@@ -31,6 +32,10 @@ object TunnelVisionCommand {
 						}
 						.then(literal("hud").executes {
 							HudManager.openEditor()
+							1
+						})
+						.then(literal("sounds").executes {
+							TitleSounds.openScreen()
 							1
 						})
 						.then(crystalCommand())

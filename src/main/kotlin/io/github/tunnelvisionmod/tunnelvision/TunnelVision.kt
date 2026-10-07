@@ -5,6 +5,7 @@ import io.github.tunnelvisionmod.tunnelvision.core.commands.TunnelVisionCommand
 import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
 import io.github.tunnelvisionmod.tunnelvision.core.events.EventHooks
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudManager
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSounds
 import io.github.tunnelvisionmod.tunnelvision.data.bazaar.Bazaar
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalState
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.Fossil
@@ -70,6 +71,7 @@ object TunnelVision : ClientModInitializer {
 	override fun onInitializeClient() {
 		ConfigManager.load()
 		HudManager.load()
+		TitleSounds.load()
 		Storage.load()
 		EventHooks.register()
 		SkyBlock.register()

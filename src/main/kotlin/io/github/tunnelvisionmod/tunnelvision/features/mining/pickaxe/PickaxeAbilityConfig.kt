@@ -17,11 +17,6 @@ class PickaxeAbilityConfig {
 	@ConfigEditorBoolean
 	var showTitle = true
 
-	@Expose
-	@JvmField
-	@ConfigOption(name = "Ready Sound", desc = "Play a sound when your pickaxe ability is ready.")
-	@ConfigEditorBoolean
-	var playSound = true
 
 	@Expose
 	@JvmField

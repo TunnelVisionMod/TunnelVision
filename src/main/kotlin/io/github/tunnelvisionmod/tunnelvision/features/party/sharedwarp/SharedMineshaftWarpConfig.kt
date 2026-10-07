@@ -32,9 +32,4 @@ class SharedMineshaftWarpConfig {
 	@ConfigEditorBoolean
 	var showTitle = true
 
-	@Expose
-	@JvmField
-	@ConfigOption(name = "Sound", desc = "Play a sound when a mineshaft is shared.")
-	@ConfigEditorBoolean
-	var playSound = true
 }
