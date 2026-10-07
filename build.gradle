@@ -97,3 +97,5 @@ jar {
 		rename { "${it}_${base.archivesName.get()}" }
 	}
 }
+
+apply from: "gradle/release.gradle"
