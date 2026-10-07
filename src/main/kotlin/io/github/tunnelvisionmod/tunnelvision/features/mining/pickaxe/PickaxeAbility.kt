@@ -1,7 +1,6 @@
 package io.github.tunnelvisionmod.tunnelvision.features.mining.pickaxe
 
 import io.github.tunnelvisionmod.tunnelvision.TunnelVision.mc
-import io.github.tunnelvisionmod.tunnelvision.compat.Compat
 import io.github.tunnelvisionmod.tunnelvision.core.Feature
 import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
 import io.github.tunnelvisionmod.tunnelvision.core.events.ChatReceivedEvent
@@ -12,15 +11,16 @@ import io.github.tunnelvisionmod.tunnelvision.core.events.LocationChangedEvent
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudManager
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudPosition
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudWidget
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSound
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSounds
 import io.github.tunnelvisionmod.tunnelvision.features.mining.pickaxe.CooldownSync.TICKS_PER_SECOND
 import io.github.tunnelvisionmod.tunnelvision.utils.Debug
 import io.github.tunnelvisionmod.tunnelvision.utils.SkyBlock
 import io.github.tunnelvisionmod.tunnelvision.utils.TabList
+import io.github.tunnelvisionmod.tunnelvision.utils.Titles
 import io.github.tunnelvisionmod.tunnelvision.utils.loreLines
 import net.minecraft.ChatFormatting
-import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.network.chat.Component
-import net.minecraft.sounds.SoundEvents
 
 object PickaxeAbility : Feature {
 	private val config get() = ConfigManager.config.mining.pickaxeAbility
@@ -107,11 +107,9 @@ object PickaxeAbility : Feature {
 		val name = ability ?: return
 		Debug.log { "PickaxeAbility: $name ready" }
 		if (config.showTitle) {
-			Compat.setTitleTimes(0, 50, 10)
-			Compat.setTitle(Component.literal("${name.uppercase()}!").withStyle(ChatFormatting.GOLD))
-		}
-		if (config.playSound) {
-			mc.soundManager.play(SimpleSoundInstance.forUI(SoundEvents.EXPERIENCE_ORB_PICKUP, 1f))
+			Titles.show(Component.literal("${name.uppercase()}!").withStyle(ChatFormatting.GOLD), TitleSound.PICKAXE_ABILITY, 0, 50, 10)
+		} else {
+			TitleSounds.play(TitleSound.PICKAXE_ABILITY)
 		}
 	}
 

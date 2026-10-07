@@ -1,11 +1,12 @@
 package io.github.tunnelvisionmod.tunnelvision.features.mineshaft.value
 
-import io.github.tunnelvisionmod.tunnelvision.compat.Compat
 import io.github.tunnelvisionmod.tunnelvision.core.Feature
 import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
 import io.github.tunnelvisionmod.tunnelvision.core.events.ClientTickEvent
 import io.github.tunnelvisionmod.tunnelvision.core.events.EventBus
 import io.github.tunnelvisionmod.tunnelvision.core.events.LocationChangedEvent
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSound
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSounds
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalState
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.MineshaftState
 import io.github.tunnelvisionmod.tunnelvision.data.value.MineshaftVerdict
@@ -14,6 +15,7 @@ import io.github.tunnelvisionmod.tunnelvision.utils.ChatUtils
 import io.github.tunnelvisionmod.tunnelvision.utils.Debug
 import io.github.tunnelvisionmod.tunnelvision.utils.LocationTracker
 import io.github.tunnelvisionmod.tunnelvision.utils.SkyBlock
+import io.github.tunnelvisionmod.tunnelvision.utils.Titles
 import io.github.tunnelvisionmod.tunnelvision.utils.formatPrice
 import net.minecraft.ChatFormatting
 import net.minecraft.network.chat.Component
@@ -55,9 +57,9 @@ object MineshaftValueAlert : Feature {
 		}
 		val details = Component.literal(reason(verdict)).withStyle(ChatFormatting.GRAY)
 		if (config.verdictTitle) {
-			Compat.setTitleTimes(0, 60, 10)
-			Compat.setSubtitle(details)
-			Compat.setTitle(headline)
+			Titles.show(headline, TitleSound.MINESHAFT_VERDICT, 0, 60, 10, details)
+		} else if (config.sendChat) {
+			TitleSounds.play(TitleSound.MINESHAFT_VERDICT)
 		}
 		if (config.sendChat) ChatUtils.send(headline.copy().append(Component.literal(" ")).append(details))
 	}

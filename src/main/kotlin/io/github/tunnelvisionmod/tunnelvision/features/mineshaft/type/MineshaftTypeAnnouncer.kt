@@ -4,6 +4,8 @@ import io.github.tunnelvisionmod.tunnelvision.core.Feature
 import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
 import io.github.tunnelvisionmod.tunnelvision.core.events.EventBus
 import io.github.tunnelvisionmod.tunnelvision.core.events.MineshaftEnteredEvent
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSound
+import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSounds
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.MineshaftType
 import io.github.tunnelvisionmod.tunnelvision.utils.ChatUtils
 import io.github.tunnelvisionmod.tunnelvision.utils.Titles
@@ -21,6 +23,10 @@ object MineshaftTypeAnnouncer : Feature {
 		if (!config.enabled) return
 		val name = Component.literal(mineshaft.displayName).withStyle(mineshaft.color)
 		if (config.announceEntry) ChatUtils.send(name)
-		if (config.showTitle) Titles.show(name, 0, 50, 10)
+		if (config.showTitle) {
+			Titles.show(name, TitleSound.MINESHAFT_TYPE, 0, 50, 10)
+		} else if (config.announceEntry) {
+			TitleSounds.play(TitleSound.MINESHAFT_TYPE)
+		}
 	}
 }
