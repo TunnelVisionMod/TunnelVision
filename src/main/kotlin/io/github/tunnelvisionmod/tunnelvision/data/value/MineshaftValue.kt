@@ -145,9 +145,8 @@ object MineshaftValue {
 		lockedCrystals: Set<CrystalType>,
 	): MineshaftVerdict? {
 		val gemstone = GemstoneShaft.of(type) ?: return null
-		val inputs = Inputs(priceType, mode, crystalsFull, openVanguards, lockedCrystals)
 		val finePrice = Bazaar.price(gemstone.fineGemId)?.let { priceType.of(it) } ?: return null
-		val rate = longRunRate(inputs) ?: return null
+		val rate = longRunRate(priceType, mode, openVanguards) ?: return null
 		val mineRule = mineRule(mode, crystalsFull, openVanguards)
 		val total = corpses.values.sum()
 		// Only a corpse we open gives its Pristine, so Lapis Only gets it from the Lapis ones alone.
@@ -202,14 +201,24 @@ object MineshaftValue {
 		return total
 	}
 
-	/** The coins per second the leave-and-respawn loop earns, cached per Bazaar refresh. */
-	fun longRunRate(
-		priceType: BazaarPriceType,
-		mode: LootMode,
-		crystalsFull: Boolean,
-		openVanguards: Boolean,
-		lockedCrystals: Set<CrystalType> = emptySet(),
-	): Double? = longRunRate(Inputs(priceType, mode, crystalsFull, openVanguards, lockedCrystals))
+	/**
+	 * The coins per second the leave-and-respawn loop earns, cached per Bazaar refresh.
+	 *
+	 * Rated as if every crystal is carried, whatever you hold today. The crystals you are missing are
+	 * a one-off batch that mining a good shaft first only postpones, and the forge caps how many you
+	 * can turn into coins anyway - counting them as income in every future shaft would set a bar
+	 * that even a Jasper shaft cannot clear while you are still collecting them.
+	 */
+	fun longRunRate(priceType: BazaarPriceType, mode: LootMode, openVanguards: Boolean): Double? =
+		longRunRate(
+			Inputs(
+				priceType = priceType,
+				mode = mode,
+				crystalsFull = true,
+				openVanguards = openVanguards,
+				lockedCrystals = CrystalType.entries.toSet(),
+			),
+		)
 
 	private fun longRunRate(inputs: Inputs): Double? {
 		val key = CacheKey(Bazaar.generation, inputs)

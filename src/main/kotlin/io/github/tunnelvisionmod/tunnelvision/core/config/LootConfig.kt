@@ -8,7 +8,7 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigOption
 class LootConfig {
 	@Expose
 	@JvmField
-	@ConfigOption(name = "Loot Mode", desc = "§eLapis Only§7: only Lapis corpses. §eNormal§7: all corpses in a shaft worth mining, otherwise Lapis + Vanguard. §eGreedy§7: all corpses until crystals and forge are full, then like Normal. Vanguards are skipped throughout unless §eOpen Vanguard Corpses §7is on.")
+	@ConfigOption(name = "Loot Mode", desc = "§eLapis Only§7: only Lapis corpses. §eNormal§7: all corpses in a shaft worth mining, otherwise Lapis + Vanguard. §eGreedy§7: all corpses until you carry every crystal a corpse can drop, then like Normal. Vanguards are skipped throughout unless §eOpen Vanguard Corpses §7is on.")
 	@ConfigEditorDropdown
 	var lootMode = LootMode.LAPIS_ONLY
 

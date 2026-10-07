@@ -43,6 +43,9 @@ object CrystalState {
 	/** True when every crystal is carried and the forge has no open slot. */
 	val crystalsAndForgeFull: Boolean get() = tracker.hasAll && (forgeFull ?: Storage.data.forgeFull) == true
 
+	/** True when no corpse can drop a crystal any more; the forge does not matter for that. */
+	val corpseCrystalsCarried: Boolean get() = tracker.hasCorpseCrystals
+
 	val carried: Set<CrystalType> get() = tracker.carried
 
 	/** False until /hotm has been read, so [carried] being empty may just mean unknown. */

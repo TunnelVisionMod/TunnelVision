@@ -158,8 +158,18 @@ class MineshaftValueTest {
 
 	@Test
 	fun `only vanguard corpses can drop a shattered locket`() {
-		assertTrue(CorpseLootTables.VANGUARD.drops.any { it.item == CorpseDropItem.Fixed(CorpseValue.LOCKET_COINS) })
-		assertTrue(CorpseLootTables.LAPIS.drops.none { it.item is CorpseDropItem.Fixed })
+		val locket = CorpseDropItem.Auction(CorpseValue.LOCKET_ID, CorpseValue.LOCKET_FALLBACK)
+		assertTrue(CorpseLootTables.VANGUARD.drops.any { it.item == locket })
+		assertTrue(CorpseLootTables.UMBER_TUNGSTEN.drops.none { it.item == locket })
+		assertTrue(CorpseLootTables.LAPIS.drops.none { it.item is CorpseDropItem.Auction })
+	}
+
+	@Test
+	fun `jasper and ruby are the only crystals no corpse drops`() {
+		val dropped = (CorpseLootTables.UMBER_TUNGSTEN.drops + CorpseLootTables.VANGUARD.drops)
+			.mapNotNull { (it.item as? CorpseDropItem.Crystal)?.crystal }
+			.toSet()
+		assertEquals(dropped, CrystalType.CORPSE_DROPS)
 	}
 
 	@Test
@@ -206,10 +216,11 @@ class MineshaftValueTest {
 
 	@Test
 	fun `the rng meter is always valued as a shattered locket`() {
-		assertEquals(CorpseValue.LOCKET_COINS / 5000, CorpseValue.meterValue(CorpseType.LAPIS), 1e-6)
-		assertEquals(CorpseValue.LOCKET_COINS / 1000, CorpseValue.meterValue(CorpseType.UMBER), 1e-6)
-		assertEquals(CorpseValue.LOCKET_COINS / 1000, CorpseValue.meterValue(CorpseType.TUNGSTEN), 1e-6)
-		assertEquals(CorpseValue.LOCKET_COINS / 100, CorpseValue.meterValue(CorpseType.VANGUARD), 1e-6)
+		val locket = CorpseValue.locketCoins()
+		assertEquals(locket / 5000, CorpseValue.meterValue(CorpseType.LAPIS), 1e-6)
+		assertEquals(locket / 1000, CorpseValue.meterValue(CorpseType.UMBER), 1e-6)
+		assertEquals(locket / 1000, CorpseValue.meterValue(CorpseType.TUNGSTEN), 1e-6)
+		assertEquals(locket / 100, CorpseValue.meterValue(CorpseType.VANGUARD), 1e-6)
 	}
 
 	@Test

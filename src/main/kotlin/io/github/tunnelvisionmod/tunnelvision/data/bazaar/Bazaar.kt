@@ -11,12 +11,21 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 data class BazaarPrices(val sellOffer: Double, val instantSell: Double)
 
+/**
+ * Bazaar prices from Hypixel, plus lowest BINs for the few auction-house items we value.
+ *
+ * Hypixel's own auction API is paged and far too heavy to poll, so lowest BINs come from the
+ * EliteSkyblock feed Firmament also uses. Both refresh together.
+ */
 object Bazaar {
 	private const val URL = "https://api.hypixel.net/v2/skyblock/bazaar"
+	private const val AUCTION_URL = "https://api.eliteskyblock.com/resources/auctions/neu"
 	private const val REFRESH_MS = 5 * 60 * 1000L
 	private const val RETRY_MS = 60 * 1000L
 
@@ -27,12 +36,15 @@ object Bazaar {
 	private var prices: Map<String, BazaarPrices> = emptyMap()
 
 	@Volatile
+	private var lowestBins: Map<String, Double> = emptyMap()
+
+	@Volatile
 	private var nextFetch = 0L
 
+	private val loads = AtomicInteger()
+
 	/** Bumped on every successful load, so callers can cache work derived from prices. */
-	@Volatile
-	var generation: Int = 0
-		private set
+	val generation: Int get() = loads.get()
 
 	fun init() {
 		EventBus.on<ClientTickEvent> { if (SkyBlock.isOnMiningIsland) refreshIfStale() }
@@ -40,17 +52,18 @@ object Bazaar {
 
 	fun price(productId: String): BazaarPrices? = prices[productId]
 
+	/** The lowest BIN for an auction-house item, or null until the feed has loaded or if it is not listed. */
+	fun lowestBin(itemId: String): Double? = lowestBins[itemId]
+
 	private fun refreshIfStale() {
 		if (System.currentTimeMillis() < nextFetch || !fetching.compareAndSet(false, true)) return
-		val request = HttpRequest.newBuilder(URI.create(URL))
-			.timeout(Duration.ofSeconds(15))
-			.header("User-Agent", TunnelVision.MOD_ID)
-			.GET()
-			.build()
-		client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-			.thenAccept { response ->
-				val parsed = parse(response.body())
-				if (parsed.isNotEmpty()) prices = parsed
+		val bazaar = fetch(URL)
+			.thenAccept { body ->
+				val parsed = parse(body)
+				if (parsed.isNotEmpty()) {
+					prices = parsed
+					loads.incrementAndGet()
+				}
 				nextFetch = System.currentTimeMillis() + if (parsed.isNotEmpty()) REFRESH_MS else RETRY_MS
 				Debug.log { "Bazaar: loaded ${parsed.size} products" }
 			}
@@ -59,7 +72,29 @@ object Bazaar {
 				nextFetch = System.currentTimeMillis() + RETRY_MS
 				null
 			}
-			.whenComplete { _, _ -> fetching.set(false) }
+		val auctions = fetch(AUCTION_URL)
+			.thenAccept { body ->
+				val parsed = parseLowestBins(body)
+				if (parsed.isNotEmpty()) {
+					lowestBins = parsed
+					loads.incrementAndGet()
+				}
+				Debug.log { "Bazaar: loaded ${parsed.size} lowest BINs" }
+			}
+			.exceptionally { error ->
+				TunnelVision.logger.warn("Failed to load lowest BINs: ${error.message}")
+				null
+			}
+		CompletableFuture.allOf(bazaar, auctions).whenComplete { _, _ -> fetching.set(false) }
+	}
+
+	private fun fetch(url: String): CompletableFuture<String> {
+		val request = HttpRequest.newBuilder(URI.create(url))
+			.timeout(Duration.ofSeconds(15))
+			.header("User-Agent", TunnelVision.MOD_ID)
+			.GET()
+			.build()
+		return client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply { it.body() }
 	}
 
 	fun parse(json: String): Map<String, BazaarPrices> {
@@ -68,6 +103,13 @@ object Bazaar {
 		return root.getAsJsonObject("products").entrySet().mapNotNull { (id, product) ->
 			val status = product.asJsonObject.getAsJsonObject("quick_status") ?: return@mapNotNull null
 			id to BazaarPrices(sellOffer = status.get("buyPrice").asDouble, instantSell = status.get("sellPrice").asDouble)
+		}.toMap()
+	}
+
+	fun parseLowestBins(json: String): Map<String, Double> {
+		val root = runCatching { JsonParser.parseString(json).asJsonObject }.getOrNull() ?: return emptyMap()
+		return root.entrySet().mapNotNull { (id, price) ->
+			price.takeIf { it.isJsonPrimitive && it.asJsonPrimitive.isNumber }?.let { id to it.asDouble }
 		}.toMap()
 	}
 }
