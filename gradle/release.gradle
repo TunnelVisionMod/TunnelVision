@@ -23,8 +23,9 @@ def KEYS_FILE = "src/main/kotlin/io/github/tunnelvisionmod/tunnelvision/core/upd
 def MINECRAFT_VERSIONS = ["26.1.2", "26.2"]
 def isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
 
-def run = { List<String> command, boolean allowFailure = false ->
-	def process = new ProcessBuilder(command).directory(rootDir).redirectErrorStream(true).start()
+def run = { List command, boolean allowFailure = false ->
+	// Groovy's "v$x" strings are not java.lang.String, which ProcessBuilder insists on.
+	def process = new ProcessBuilder(command.collect { it.toString() }).directory(rootDir).redirectErrorStream(true).start()
 	def output = process.inputStream.text.trim()
 	if (process.waitFor() != 0 && !allowFailure) throw new GradleException("`${command.join(' ')}` failed:\n$output")
 	output
