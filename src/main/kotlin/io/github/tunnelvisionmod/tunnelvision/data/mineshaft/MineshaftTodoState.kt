@@ -49,7 +49,7 @@ object MineshaftTodoState {
 
 	private fun currentRule(): LootRule = CorpseLoot.rule(
 		mode = loot.lootMode,
-		crystalsFull = CrystalState.crystalsAndForgeFull,
+		crystalsFull = CrystalState.corpseCrystalsCarried,
 		shouldMine = ShaftVerdict.current()?.shouldMine,
 		openVanguards = loot.openVanguards,
 	)

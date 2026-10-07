@@ -56,7 +56,7 @@ object ShaftVerdict {
 			corpses = corpses,
 			priceType = ConfigManager.config.general.bazaarPrice,
 			mode = loot.lootMode,
-			crystalsFull = CrystalState.crystalsAndForgeFull,
+			crystalsFull = CrystalState.corpseCrystalsCarried,
 			openVanguards = loot.openVanguards,
 			lockedCrystals = lockedCrystals(),
 		)

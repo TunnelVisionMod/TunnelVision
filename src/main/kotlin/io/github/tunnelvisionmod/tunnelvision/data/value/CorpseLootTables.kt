@@ -13,8 +13,8 @@ sealed interface CorpseDropItem {
 	/** A Gemstone Crystal, worth the Perfect it builds minus the Fine gems that Perfect would cost. */
 	data class Crystal(val crystal: CrystalType) : CorpseDropItem
 
-	/** Auction-house only, so it carries a fixed estimate instead of a feed. */
-	data class Fixed(val coins: Double) : CorpseDropItem
+	/** Auction-house only, priced at its lowest BIN, with [fallback] until that feed has loaded. */
+	data class Auction(val itemId: String, val fallback: Double) : CorpseDropItem
 }
 
 /**
@@ -134,7 +134,7 @@ object CorpseLootTables {
 			CorpseDrop(CorpseDropItem.Bazaar("UMBER_PLATE"), amount = 1.0, weight = 5),
 			CorpseDrop(CorpseDropItem.Bazaar("FROZEN_SCUTE"), amount = 1.0, weight = 4),
 			CorpseDrop(CorpseDropItem.Bazaar("SKELETON_KEY"), amount = 1.0, weight = 4),
-			CorpseDrop(CorpseDropItem.Fixed(40000000.0), amount = 1.0, weight = 2),
+			CorpseDrop(CorpseDropItem.Auction("CAGED_WISP", 40_000_000.0), amount = 1.0, weight = 2),
 		),
 	)
 
@@ -178,10 +178,10 @@ object CorpseLootTables {
 			CorpseDrop(CorpseDropItem.Bazaar("UMBER_PLATE"), amount = 1.0, weight = 30),
 			CorpseDrop(CorpseDropItem.Bazaar("TUNGSTEN_KEY"), amount = 4.0, weight = 20),
 			CorpseDrop(CorpseDropItem.Bazaar("UMBER_KEY"), amount = 4.0, weight = 20),
-			CorpseDrop(CorpseDropItem.Fixed(40000000.0), amount = 1.0, weight = 10),
+			CorpseDrop(CorpseDropItem.Auction("CAGED_WISP", 40_000_000.0), amount = 1.0, weight = 10),
 			CorpseDrop(CorpseDropItem.Bazaar("FROZEN_SCUTE"), amount = 1.0, weight = 10),
 			CorpseDrop(CorpseDropItem.Bazaar("SKELETON_KEY"), amount = 1.0, weight = 10),
-			CorpseDrop(CorpseDropItem.Fixed(500000000.0), amount = 1.0, weight = 5),
+			CorpseDrop(CorpseDropItem.Auction(CorpseValue.LOCKET_ID, CorpseValue.LOCKET_FALLBACK), amount = 1.0, weight = 5),
 		),
 	)
 

@@ -40,6 +40,16 @@ class CrystalTrackerTest {
 	}
 
 	@Test
+	fun `corpse crystals ignore jasper and ruby`() {
+		val tracker = CrystalTracker()
+		for (crystal in CrystalType.CORPSE_DROPS.drop(1)) tracker.gained(crystal)
+		assertFalse(tracker.hasCorpseCrystals)
+		tracker.gained(CrystalType.CORPSE_DROPS.first())
+		assertTrue(tracker.hasCorpseCrystals)
+		assertFalse(tracker.hasAll)
+	}
+
+	@Test
 	fun `reset clears everything`() {
 		val tracker = CrystalTracker()
 		tracker.gained(CrystalType.JASPER)

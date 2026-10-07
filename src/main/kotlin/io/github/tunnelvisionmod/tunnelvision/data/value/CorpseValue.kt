@@ -22,7 +22,10 @@ import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.CorpseType
 object CorpseValue {
 	/** The only RNG meter drop worth selecting; anything else is a loss. */
 	const val LOCKET_METER_XP = 2_500_000.0
-	const val LOCKET_COINS = 500_000_000.0
+	const val LOCKET_ID = "SHATTERED_PENDANT"
+	const val LOCKET_FALLBACK = 500_000_000.0
+
+	fun locketCoins(): Double = Bazaar.lowestBin(LOCKET_ID) ?: LOCKET_FALLBACK
 
 	fun table(type: CorpseType): CorpseTable = when (type) {
 		CorpseType.LAPIS -> CorpseLootTables.LAPIS
@@ -50,15 +53,16 @@ object CorpseValue {
 	}
 
 	/** Coins the RNG meter XP from one corpse is worth, as a fraction of a Shattered Locket. */
-	fun meterValue(type: CorpseType): Double = table(type).meterXp / LOCKET_METER_XP * LOCKET_COINS
+	fun meterValue(type: CorpseType): Double = table(type).meterXp / LOCKET_METER_XP * locketCoins()
 
 	/**
-	 * What the key costs. We price it as an instant buy rather than a buy order: a key we are about
-	 * to use is one we are not waiting around for.
+	 * What the key costs. Umber and Tungsten keys are stocked up on with buy orders before a mining
+	 * session; Skeleton Keys do not fill as buy orders, so those are priced as an instant buy.
 	 */
 	fun keyCost(type: CorpseType): Double? {
 		val product = type.keyProductId ?: return 0.0
-		return Bazaar.price(product)?.sellOffer
+		val prices = Bazaar.price(product) ?: return null
+		return if (type == CorpseType.VANGUARD) prices.sellOffer else prices.instantSell
 	}
 
 	/** Net coins per looted corpse, or null while any price it needs is missing. */
@@ -72,7 +76,7 @@ object CorpseValue {
 		this is CorpseDropItem.Crystal && crystal in lockedCrystals
 
 	private fun itemValue(item: CorpseDropItem, priceType: BazaarPriceType): Double? = when (item) {
-		is CorpseDropItem.Fixed -> item.coins
+		is CorpseDropItem.Auction -> Bazaar.lowestBin(item.itemId) ?: item.fallback
 		is CorpseDropItem.Bazaar -> Bazaar.price(item.productId)?.let { priceType.of(it) }
 		is CorpseDropItem.Crystal -> CrystalValue.of(item.crystal)
 	}

@@ -22,4 +22,19 @@ class BazaarTest {
 	fun `failed response has no prices`() {
 		assertTrue(Bazaar.parse("""{"success": false, "cause": "Too many requests"}""").isEmpty())
 	}
+
+	@Test
+	fun `parses lowest bins`() {
+		val json = """
+			{"SHATTERED_PENDANT": 505000000, "CAGED_WISP": 42500000}
+		""".trimIndent()
+		val bins = Bazaar.parseLowestBins(json)
+		assertEquals(505_000_000.0, bins["SHATTERED_PENDANT"])
+		assertEquals(42_500_000.0, bins["CAGED_WISP"])
+	}
+
+	@Test
+	fun `broken lowest bin feed has no prices`() {
+		assertTrue(Bazaar.parseLowestBins("<html>525</html>").isEmpty())
+	}
 }
