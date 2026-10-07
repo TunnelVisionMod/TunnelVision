@@ -1,0 +1,222 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.security.KeyFactory
+import java.security.KeyPairGenerator
+import java.security.Signature
+import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.X509EncodedKeySpec
+
+// Release tooling for the maintainer. The private signing key lives only in the environment variable
+// below, never in the repo; the mod carries the public half in ReleaseKeys.kt and its updater refuses
+// any jar that was not signed with it.
+//
+//   ./gradlew generateReleaseKey        once: creates the key pair
+//   ./gradlew release "-Pv=1.4.0"       checks, tags, pushes, waits for CI, signs and publishes
+
+def REPO = "TunnelVisionMod/TunnelVision"
+def KEY_ENV = "TUNNELVISION_RELEASE_KEY"
+def KEYS_FILE = "src/main/kotlin/io/github/tunnelvisionmod/tunnelvision/core/update/ReleaseKeys.kt"
+def MINECRAFT_VERSIONS = ["26.1.2", "26.2"]
+def isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
+
+def run = { List command, boolean allowFailure = false ->
+	// Groovy's "v$x" strings are not java.lang.String, which ProcessBuilder insists on.
+	def process = new ProcessBuilder(command.collect { it.toString() }).directory(rootDir).redirectErrorStream(true).start()
+	def output = process.inputStream.text.trim()
+	if (process.waitFor() != 0 && !allowFailure) throw new GradleException("`${command.join(' ')}` failed:\n$output")
+	output
+}
+
+def parseVersion = { String text ->
+	def match = text =~ /^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$/
+	match.matches() ? [match.group(1) as int, match.group(2) as int, match.group(3) as int, match.group(4)] : null
+}
+
+def compareVersions = { List a, List b ->
+	for (i in 0..2) if (a[i] != b[i]) return a[i] <=> b[i]
+	if (a[3] == b[3]) return 0
+	if (a[3] == null) return 1
+	if (b[3] == null) return -1
+	a[3] <=> b[3]
+}
+
+def embeddedKeys = {
+	(file(KEYS_FILE).text =~ /"([A-Za-z0-9+\/=]{40,})"/).collect { it[1] }
+}
+
+def sign = { byte[] data, String privateKey ->
+	def key = KeyFactory.getInstance("Ed25519").generatePrivate(new PKCS8EncodedKeySpec(Base64.decoder.decode(privateKey)))
+	def signer = Signature.getInstance("Ed25519")
+	signer.initSign(key)
+	signer.update(data)
+	Base64.encoder.encodeToString(signer.sign())
+}
+
+def verify = { byte[] data, String signature, String publicKey ->
+	try {
+		def key = KeyFactory.getInstance("Ed25519").generatePublic(new X509EncodedKeySpec(Base64.decoder.decode(publicKey)))
+		def verifier = Signature.getInstance("Ed25519")
+		verifier.initVerify(key)
+		verifier.update(data)
+		verifier.verify(Base64.decoder.decode(signature))
+	} catch (Exception ignored) {
+		false
+	}
+}
+
+tasks.register("generateReleaseKey") {
+	group = "release"
+	description = "Creates the release signing key: private half into $KEY_ENV, public half into ReleaseKeys.kt."
+	doLast {
+		def existing = System.getenv(KEY_ENV)
+		if (!existing && isWindows) {
+			existing = run(["reg", "query", "HKCU\\Environment", "/v", KEY_ENV], true).contains(KEY_ENV) ? "set" : null
+		}
+		if (existing) throw new GradleException("$KEY_ENV is already set. Delete it first if you really want a new key - releases signed with the old one stop verifying.")
+
+		def pair = KeyPairGenerator.getInstance("Ed25519").generateKeyPair()
+		def privateKey = Base64.encoder.encodeToString(pair.private.encoded)
+		def publicKey = Base64.encoder.encodeToString(pair.public.encoded)
+
+		def keys = file(KEYS_FILE)
+		def marker = "listOf(\n"
+		if (!keys.text.contains(marker)) throw new GradleException("Could not find the key list in $KEYS_FILE")
+		keys.text = keys.text.replaceFirst(java.util.regex.Pattern.quote(marker), java.util.regex.Matcher.quoteReplacement(marker + "\t\t\"$publicKey\",\n"))
+
+		if (isWindows) {
+			run(["setx", KEY_ENV, privateKey])
+			logger.lifecycle("""
+				|Release key created.
+				|  Private key: stored in the user environment variable $KEY_ENV (open a NEW terminal before releasing).
+				|  Public key:  added to $KEYS_FILE - commit that file.
+				|
+				|Back the private key up now (password manager), it cannot be recovered:
+				|  powershell -Command "[Environment]::GetEnvironmentVariable('$KEY_ENV','User')"
+				|""".stripMargin())
+		} else {
+			logger.lifecycle("""
+				|Release key created. Public key added to $KEYS_FILE - commit that file.
+				|Add this to your shell profile and back it up, it cannot be recovered:
+				|  export $KEY_ENV=$privateKey
+				|""".stripMargin())
+		}
+	}
+}
+
+tasks.register("release") {
+	group = "release"
+	description = "Tags, pushes, waits for the CI draft, signs both jars and publishes. Usage: ./gradlew release \"-Pv=1.4.0\""
+	doLast {
+		def versionText = project.findProperty("v")?.toString()
+		def version = versionText ? parseVersion(versionText) : null
+		if (!version) throw new GradleException("Give the version as -Pv=X.Y.Z or -Pv=X.Y.Z-suffix, e.g. ./gradlew release \"-Pv=1.4.0\"")
+		def plain = versionText.replaceFirst(/^v/, "")
+		def tag = "v$plain"
+
+		// 1. Checks - nothing is changed until all of these pass.
+		def privateKey = System.getenv(KEY_ENV)
+		if (!privateKey) throw new GradleException("$KEY_ENV is not set. Run ./gradlew generateReleaseKey once, then open a new terminal.")
+		def probe = "tunnelvision-key-check".bytes
+		def probeSignature = sign(probe, privateKey)
+		if (!embeddedKeys().any { verify(probe, probeSignature, it) }) {
+			throw new GradleException("Your $KEY_ENV does not match any key in ReleaseKeys.kt - the updater would reject this release.")
+		}
+		if (run(["git", "rev-parse", "--abbrev-ref", "HEAD"]) != "main") throw new GradleException("Switch to main first.")
+		if (run(["git", "status", "--porcelain"])) throw new GradleException("You have uncommitted changes - commit or stash them first.")
+		run(["git", "fetch", "origin", "--tags"])
+		if (run(["git", "rev-parse", "HEAD"]) != run(["git", "rev-parse", "origin/main"])) {
+			throw new GradleException("Your main is not the same as origin/main - pull or push first.")
+		}
+		if (run(["git", "tag", "-l", tag])) throw new GradleException("Tag $tag already exists.")
+
+		def token = System.getenv("GITHUB_TOKEN")
+		if (!token) {
+			def credential = new ProcessBuilder(["git", "credential", "fill"]).directory(rootDir).start()
+			credential.outputStream.withWriter { it.write("protocol=https\nhost=github.com\n\n") }
+			token = credential.inputStream.text.readLines().find { it.startsWith("password=") }?.substring("password=".length())
+			credential.waitFor()
+		}
+		if (!token) throw new GradleException("No GitHub login found. Push once with git so it is saved, or set GITHUB_TOKEN.")
+
+		def http = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()
+		def json = new JsonSlurper()
+		def api = { String method, String url, String body = null, String contentType = "application/json" ->
+			def builder = HttpRequest.newBuilder(URI.create(url))
+				.header("Authorization", "Bearer $token")
+				.header("Accept", "application/vnd.github+json")
+				.header("User-Agent", "TunnelVision-Release")
+			builder.method(method, body == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(body))
+			if (body != null) builder.header("Content-Type", contentType)
+			def response = http.send(builder.build(), HttpResponse.BodyHandlers.ofString())
+			[status: response.statusCode(), body: response.body() ? json.parseText(response.body()) : null]
+		}
+
+		def latest = api("GET", "https://api.github.com/repos/$REPO/releases/latest")
+		if (latest.status == 200) {
+			def published = parseVersion(latest.body.tag_name)
+			if (published && compareVersions(version, published) <= 0) {
+				throw new GradleException("$tag is not higher than the latest release ${latest.body.tag_name}.")
+			}
+		} else if (latest.status != 404) {
+			throw new GradleException("GitHub answered ${latest.status} - is your login allowed to release?")
+		}
+
+		// 2. Tag and push.
+		logger.lifecycle("Tagging $tag and pushing it...")
+		def sha = run(["git", "rev-parse", "HEAD"])
+		run(["git", "tag", tag])
+		run(["git", "push", "origin", tag])
+
+		// 3. Wait for CI to build the draft.
+		def jars = MINECRAFT_VERSIONS.collect { "TunnelVision-v$plain-${it}.jar".toString() }
+		def draft = null
+		def deadline = System.currentTimeMillis() + 20 * 60 * 1000
+		while (draft == null) {
+			if (System.currentTimeMillis() > deadline) throw new GradleException("CI did not finish within 20 minutes. Check the Actions tab; once the draft exists, sign it by hand or delete the tag's draft.")
+			def runs = api("GET", "https://api.github.com/repos/$REPO/actions/runs?head_sha=$sha&event=push")
+			def releaseRun = runs.body?.workflow_runs?.find { it.name == "Release" }
+			if (releaseRun?.status == "completed" && releaseRun.conclusion != "success") {
+				throw new GradleException("The Release workflow failed: ${releaseRun.html_url}")
+			}
+			def releases = api("GET", "https://api.github.com/repos/$REPO/releases?per_page=20")
+			def candidate = releases.body?.find { it.tag_name == tag }
+			if (candidate && jars.every { name -> candidate.assets.any { it.name == name && it.state == "uploaded" } }) {
+				draft = candidate
+			} else {
+				logger.lifecycle("Waiting for CI (${releaseRun?.status ?: "queued"})...")
+				Thread.sleep(15_000)
+			}
+		}
+
+		// 4. Download and sign both jars.
+		jars.each { name ->
+			def asset = draft.assets.find { it.name == name }
+			def request = HttpRequest.newBuilder(URI.create(asset.url))
+				.header("Authorization", "Bearer $token")
+				.header("Accept", "application/octet-stream")
+				.header("User-Agent", "TunnelVision-Release")
+				.GET().build()
+			def response = http.send(request, HttpResponse.BodyHandlers.ofByteArray())
+			if (response.statusCode() == 302) {
+				// The asset is served from storage that rejects our GitHub token, so follow without it.
+				def location = response.headers().firstValue("Location").orElseThrow()
+				response = http.send(HttpRequest.newBuilder(URI.create(location)).GET().build(), HttpResponse.BodyHandlers.ofByteArray())
+			}
+			if (response.statusCode() != 200) throw new GradleException("Downloading $name failed with HTTP ${response.statusCode()}")
+			def signature = sign(response.body(), privateKey)
+			def uploadUrl = draft.upload_url.replaceFirst(/\{.*}$/, "") + "?name=" + URLEncoder.encode("${name}.sig", "UTF-8")
+			def upload = api("POST", uploadUrl, signature, "application/octet-stream")
+			if (upload.status != 201) throw new GradleException("Uploading ${name}.sig failed with HTTP ${upload.status}")
+			logger.lifecycle("Signed $name")
+		}
+
+		// 5. Publish.
+		def publish = api("PATCH", "https://api.github.com/repos/$REPO/releases/${draft.id}", JsonOutput.toJson([draft: false]))
+		if (publish.status != 200) throw new GradleException("Publishing failed with HTTP ${publish.status} - the signed draft is still there to publish by hand.")
+		logger.lifecycle("Released $tag: ${publish.body.html_url}")
+	}
+}
