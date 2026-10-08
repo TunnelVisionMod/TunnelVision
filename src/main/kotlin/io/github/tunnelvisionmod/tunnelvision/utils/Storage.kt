@@ -14,6 +14,9 @@ class StorageData {
 
 	@field:Expose
 	var forgeFull: Boolean? = null
+
+	@field:Expose
+	var coldResistancePeaks: MutableList<Double> = mutableListOf()
 }
 
 object Storage {

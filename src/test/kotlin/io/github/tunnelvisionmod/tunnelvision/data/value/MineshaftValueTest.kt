@@ -290,31 +290,31 @@ class MineshaftValueTest {
 		val group = GemstoneGroup.SOFT
 		val rate = 65_000_000.0 / 3600
 		val corpseGain = 1_500_000.0
-		val price = MineshaftValue.breakEvenPrice(group, looted = 3, rate = rate, corpseGain = corpseGain)!!
-		val income = MineshaftValue.SHAFT_SECONDS * MineshaftValue.finePerSecond(group, 3) * price
-		val margin = (income + corpseGain) / (MineshaftValue.SHAFT_SECONDS - MineshaftValue.SKIP_SECONDS)
+		val price = MineshaftValue.breakEvenPrice(group, looted = 3, rate = rate, corpseGain = corpseGain, shaftSeconds = SHAFT)!!
+		val income = SHAFT * MineshaftValue.finePerSecond(group, 3) * price
+		val margin = (income + corpseGain) / (SHAFT - MineshaftValue.SKIP_SECONDS)
 		assertEquals(rate, margin, 1e-9)
 	}
 
 	@Test
 	fun `a harder gemstone needs a higher price`() {
 		val rate = 65_000_000.0 / 3600
-		val soft = MineshaftValue.breakEvenPrice(GemstoneGroup.SOFT, 3, rate, 0.0)!!
-		val hard = MineshaftValue.breakEvenPrice(GemstoneGroup.HARD, 3, rate, 0.0)!!
+		val soft = MineshaftValue.breakEvenPrice(GemstoneGroup.SOFT, 3, rate, 0.0, SHAFT)!!
+		val hard = MineshaftValue.breakEvenPrice(GemstoneGroup.HARD, 3, rate, 0.0, SHAFT)!!
 		assertTrue(hard > soft, "$hard should exceed $soft")
 	}
 
 	@Test
 	fun `more corpses lower the price needed`() {
 		val rate = 65_000_000.0 / 3600
-		val one = MineshaftValue.breakEvenPrice(GemstoneGroup.SOFT, 1, rate, 500_000.0)!!
-		val four = MineshaftValue.breakEvenPrice(GemstoneGroup.SOFT, 4, rate, 2_000_000.0)!!
+		val one = MineshaftValue.breakEvenPrice(GemstoneGroup.SOFT, 1, rate, 500_000.0, SHAFT)!!
+		val four = MineshaftValue.breakEvenPrice(GemstoneGroup.SOFT, 4, rate, 2_000_000.0, SHAFT)!!
 		assertTrue(four < one, "$four should be below $one")
 	}
 
 	@Test
 	fun `no price is needed once the corpses clear the bar on their own`() {
-		assertNull(MineshaftValue.breakEvenPrice(GemstoneGroup.SOFT, 4, 65_000_000.0 / 3600, 1e12))
+		assertNull(MineshaftValue.breakEvenPrice(GemstoneGroup.SOFT, 4, 65_000_000.0 / 3600, 1e12, SHAFT))
 	}
 
 	@Test
@@ -328,6 +328,8 @@ class MineshaftValueTest {
 				crystalsFull = false,
 				openVanguards = true,
 				lockedCrystals = emptySet(),
+				coldResistance = 138.0,
+				loopColdResistance = 128.0,
 			),
 		)
 	}
@@ -343,6 +345,8 @@ class MineshaftValueTest {
 				crystalsFull = false,
 				openVanguards = true,
 				lockedCrystals = emptySet(),
+				coldResistance = 138.0,
+				loopColdResistance = 128.0,
 			),
 		)
 	}
@@ -366,6 +370,7 @@ class MineshaftValueTest {
 
 	private companion object {
 		const val SLOWEST_ROW = 25
+		const val SHAFT = 13 * 60.0
 
 		/** Ticks to the minimum mining speed for Ruby, the soft group, Topaz, Jasper, the hard group. */
 		val SPEED_TABLE = listOf(

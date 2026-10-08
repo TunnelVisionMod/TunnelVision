@@ -6,6 +6,7 @@ import io.github.tunnelvisionmod.tunnelvision.core.events.LocationChangedEvent
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalState
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalType
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.CorpseType
+import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.MineshaftMayhem
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.MineshaftParser
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.MineshaftState
 import io.github.tunnelvisionmod.tunnelvision.utils.LocationTracker
@@ -40,7 +41,7 @@ object ShaftVerdict {
 	/**
 	 * The verdict for the shaft you are in, worked out on the first call that has everything it
 	 * needs and then fixed for the rest of the shaft. Null in a shaft with no gemstones to rate, and
-	 * while the corpse widget or the Bazaar prices are still missing.
+	 * while the corpse widget, the Bazaar prices or the Mayhem buff are still missing.
 	 */
 	fun current(): MineshaftVerdict? {
 		if (!SkyBlock.isInMineshaft) return null
@@ -50,6 +51,7 @@ object ShaftVerdict {
 
 	private fun decide(): MineshaftVerdict? {
 		val type = MineshaftState.type ?: return null
+		if (!MineshaftMayhem.settled) return null
 		val corpses = corpses() ?: return null
 		return MineshaftValue.evaluate(
 			type = type,
@@ -59,6 +61,8 @@ object ShaftVerdict {
 			crystalsFull = CrystalState.corpseCrystalsCarried,
 			openVanguards = loot.openVanguards,
 			lockedCrystals = lockedCrystals(),
+			coldResistance = ColdResistance.forCurrentShaft,
+			loopColdResistance = ColdResistance.forLoop,
 		)
 	}
 

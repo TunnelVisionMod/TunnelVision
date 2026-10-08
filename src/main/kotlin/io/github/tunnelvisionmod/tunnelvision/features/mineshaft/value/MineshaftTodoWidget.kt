@@ -9,6 +9,7 @@ import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalType
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.CorpseType
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.MineshaftTodoState
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.Todo
+import io.github.tunnelvisionmod.tunnelvision.data.value.ColdResistance
 import io.github.tunnelvisionmod.tunnelvision.data.value.ShaftVerdict
 import net.minecraft.ChatFormatting
 import net.minecraft.network.chat.Component
@@ -40,6 +41,7 @@ object MineshaftTodoWidget : Feature {
 	}
 
 	private val hotmHint: Component = Component.literal("open /hotm for crystals").withStyle(ChatFormatting.GRAY)
+	private val coldHint: Component = Component.literal("add Cold Resistance to the Stats widget (/widget)").withStyle(ChatFormatting.GRAY)
 
 	private fun line(todo: Todo): Component = when (todo) {
 		is Todo.Corpse -> {
@@ -56,10 +58,12 @@ object MineshaftTodoWidget : Feature {
 		override fun getLines(): List<Component> {
 			val state = MineshaftTodoState.current ?: return emptyList()
 			val needsHotm = MineshaftTodoState.needsHotm
-			if (!needsHotm && (state.done || state.todos.isEmpty())) return emptyList()
+			val needsCold = ColdResistance.missing
+			if (!needsHotm && !needsCold && (state.done || state.todos.isEmpty())) return emptyList()
 			val lines = mutableListOf(header(ShaftVerdict.current()?.shouldMine))
 			lines += state.todos.map { line(it) }
 			if (needsHotm) lines += hotmHint
+			if (needsCold) lines += coldHint
 			return lines
 		}
 

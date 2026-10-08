@@ -7,10 +7,12 @@ import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
 import io.github.tunnelvisionmod.tunnelvision.core.events.ChatReceivedEvent
 import io.github.tunnelvisionmod.tunnelvision.core.events.ClientTickEvent
 import io.github.tunnelvisionmod.tunnelvision.core.events.EventBus
-import io.github.tunnelvisionmod.tunnelvision.core.events.LocationChangedEvent
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudManager
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudPosition
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudWidget
+import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.MayhemBuff
+import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.MineshaftMayhem
+import io.github.tunnelvisionmod.tunnelvision.data.value.ColdResistance
 import io.github.tunnelvisionmod.tunnelvision.utils.Debug
 import io.github.tunnelvisionmod.tunnelvision.utils.Sidebar
 import io.github.tunnelvisionmod.tunnelvision.utils.SkyBlock
@@ -29,8 +31,6 @@ object MiningStats : Feature {
 
 	private val config get() = ConfigManager.config.mining.miningStats
 
-	private var mayhem: MayhemBuff? = null
-
 	private val todaysSkyMall: SkyMallBuff?
 		get() {
 			val data = Storage.data
@@ -41,7 +41,6 @@ object MiningStats : Feature {
 	override fun init() {
 		EventBus.on<ChatReceivedEvent> { onChat(it) }
 		EventBus.on<ClientTickEvent> { onTick() }
-		EventBus.on<LocationChangedEvent> { mayhem = null }
 		HudManager.register(Widget)
 	}
 
@@ -49,10 +48,6 @@ object MiningStats : Feature {
 		if (!config.enabled || !SkyBlock.isOnSkyBlock) return
 		for (line in event.text.lines().map { it.trim() }) {
 			MiningStatsParser.parseSkyMallChat(line)?.let { setSkyMall(it, "chat") }
-			MiningStatsParser.parseMayhem(line)?.let {
-				Debug.log { "MiningStats: Mineshaft Mayhem $it" }
-				mayhem = it
-			}
 		}
 	}
 
@@ -100,9 +95,9 @@ object MiningStats : Feature {
 			}
 			if (config.miningEvent) MiningStatsParser.parseMiningEvent(Sidebar.lines)?.let { lines += eventLine(it) }
 			if (!SkyBlock.isInMineshaft) return lines
-			if (config.mayhem) mayhem?.let { lines += line("Mayhem", it.displayName) }
+			if (config.mayhem) MineshaftMayhem.buff?.let { lines += line("Mayhem", it.displayName) }
 			if (config.coldResistance) {
-				lines += MiningStatsParser.parseColdResistance(TabList.lines)?.let { line("Cold Resistance", "${formatNumber(it)} ❄") }
+				lines += ColdResistance.parse(TabList.lines)?.let { line("Cold Resistance", "${formatNumber(it)} ❄") }
 					?: line("Cold Resistance", "add it to the Stats widget in /widget", ChatFormatting.GRAY)
 			}
 			return lines
