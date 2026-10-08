@@ -54,11 +54,12 @@ data class MineshaftVerdict(
  * until the next one spawns, and take that one instead.
  *
  * That makes it an optimal-stopping problem rather than a price threshold. Let `R` be the coins per
- * second the whole loop earns in the long run. Staying in a shaft costs [SHAFT_SECONDS] and leaving
- * costs [SKIP_SECONDS], so the shaft is worth mining exactly when
+ * second the whole loop earns in the long run. Staying in a shaft costs `shaft` seconds, the time
+ * until the cold freezes you out ([ShaftTime]), and leaving costs [SKIP_SECONDS], so the shaft is
+ * worth mining exactly when
  *
  * ```
- * mineValue - R * SHAFT_SECONDS >= skipValue - R * SKIP_SECONDS
+ * mineValue - R * shaft >= skipValue - R * SKIP_SECONDS
  * ```
  *
  * `R` itself depends on which shafts we would mine, so it is the root of a decreasing function and
@@ -66,8 +67,7 @@ data class MineshaftVerdict(
  * against your own best alternative instead of against a hardcoded number.
  */
 object MineshaftValue {
-	/** How long we stay in a shaft we mine, and how long it takes to loot and leave one we skip. */
-	const val SHAFT_SECONDS = 16 * 60.0
+	/** How long it takes to loot and leave a shaft we skip. */
 	const val SKIP_SECONDS = 30.0
 
 	/**
@@ -113,6 +113,7 @@ object MineshaftValue {
 		val crystalsFull: Boolean,
 		val openVanguards: Boolean,
 		val lockedCrystals: Set<CrystalType>,
+		val coldResistance: Double,
 	)
 
 	private data class CacheKey(val generation: Int, val inputs: Inputs)
@@ -143,24 +144,27 @@ object MineshaftValue {
 		crystalsFull: Boolean,
 		openVanguards: Boolean,
 		lockedCrystals: Set<CrystalType>,
+		coldResistance: Double,
+		loopColdResistance: Double,
 	): MineshaftVerdict? {
 		val gemstone = GemstoneShaft.of(type) ?: return null
 		val finePrice = Bazaar.price(gemstone.fineGemId)?.let { priceType.of(it) } ?: return null
-		val rate = longRunRate(priceType, mode, crystalsFull, openVanguards, lockedCrystals) ?: return null
+		val rate = longRunRate(priceType, mode, crystalsFull, openVanguards, lockedCrystals, loopColdResistance) ?: return null
+		val shaft = ShaftTime.secondsToFreeze(coldResistance)
 		val mineRule = mineRule(mode, crystalsFull, openVanguards)
 		val total = corpses.values.sum()
 		// Only a corpse we open gives its Pristine, so Lapis Only gets it from the Lapis ones alone.
 		val looted = corpses.entries.sumOf { (type, count) -> if (mineRule.includes(type)) count else 0 }
-		val mined = SHAFT_SECONDS *
+		val mined = shaft *
 			GemstoneIncome.coinsPerSecond(gemstone.group, MiningProfile.inside, finePrice, looted.toDouble())
 		val mineCorpses = corpseValue(corpses, mineRule, priceType, lockedCrystals) ?: return null
 		val skip = corpseValue(corpses, skipRule(mode, crystalsFull, openVanguards), priceType, lockedCrystals) ?: return null
 		val mine = mined + mineCorpses
-		val marginal = (mine - skip) / (SHAFT_SECONDS - SKIP_SECONDS)
+		val marginal = (mine - skip) / (shaft - SKIP_SECONDS)
 		return MineshaftVerdict(
 			gemstone = gemstone,
 			price = finePrice,
-			neededPrice = breakEvenPrice(gemstone.group, looted, rate, mineCorpses - skip),
+			neededPrice = breakEvenPrice(gemstone.group, looted, rate, mineCorpses - skip, shaft),
 			coinsPerHour = marginal * 3600,
 			targetPerHour = rate * 3600,
 			corpses = total,
@@ -173,11 +177,11 @@ object MineshaftValue {
 	 * already clear it on their own.
 	 *
 	 * Mining income is linear in the Fine price and the corpses do not depend on it at all, so the
-	 * margin is `(SHAFT * perPrice * price + corpseGain) / (SHAFT - SKIP)` and setting that equal to
+	 * margin is `(shaft * perPrice * price + corpseGain) / (shaft - SKIP)` and setting that equal to
 	 * [rate] inverts exactly - no search needed.
 	 */
-	fun breakEvenPrice(group: GemstoneGroup, looted: Int, rate: Double, corpseGain: Double): Double? {
-		val needed = (rate * (SHAFT_SECONDS - SKIP_SECONDS) - corpseGain) / (SHAFT_SECONDS * finePerSecond(group, looted))
+	fun breakEvenPrice(group: GemstoneGroup, looted: Int, rate: Double, corpseGain: Double, shaftSeconds: Double): Double? {
+		val needed = (rate * (shaftSeconds - SKIP_SECONDS) - corpseGain) / (shaftSeconds * finePerSecond(group, looted))
 		return needed.takeIf { it > 0 }
 	}
 
@@ -215,12 +219,13 @@ object MineshaftValue {
 		mode: LootMode,
 		crystalsFull: Boolean,
 		openVanguards: Boolean,
-		lockedCrystals: Set<CrystalType> = emptySet(),
+		lockedCrystals: Set<CrystalType>,
+		coldResistance: Double,
 	): Double? = longRunRate(
 		if (mode == LootMode.GREEDY) {
-			Inputs(priceType, mode, crystalsFull = true, openVanguards, lockedCrystals = CrystalType.entries.toSet())
+			Inputs(priceType, mode, crystalsFull = true, openVanguards, CrystalType.entries.toSet(), coldResistance)
 		} else {
-			Inputs(priceType, mode, crystalsFull, openVanguards, lockedCrystals)
+			Inputs(priceType, mode, crystalsFull, openVanguards, lockedCrystals, coldResistance)
 		},
 	)
 
@@ -248,6 +253,7 @@ object MineshaftValue {
 		// means a Fairy shaft is worth nothing at all on Lapis Only, since it only holds Vanguards.
 		val fairySkip = mixValue(FAIRY_MIX, skipRule, inputs.priceType, inputs.lockedCrystals) ?: return null
 		val share = 1.0 / TYPE_COUNT
+		val shaftSeconds = ShaftTime.secondsToFreeze(inputs.coldResistance)
 
 		// How much a full loop earns over and above making [rate] for the time the loop takes. It
 		// falls as the rate rises, so the rate the loop actually sustains is where it reaches zero.
@@ -256,7 +262,7 @@ object MineshaftValue {
 			for ((count, chance) in corpseCountChances) {
 				val weight = share * chance
 				for (shaft in GemstoneShaft.entries) {
-					val mine = SHAFT_SECONDS *
+					val mine = shaftSeconds *
 						GemstoneIncome.coinsPerSecond(
 							shaft.group,
 							MiningProfile.inside,
@@ -264,7 +270,7 @@ object MineshaftValue {
 							count * minedShare,
 						) + count * mixAll
 					val skip = count * mixSkip
-					total += weight * maxOf(mine - rate * SHAFT_SECONDS, skip - rate * SKIP_SECONDS)
+					total += weight * maxOf(mine - rate * shaftSeconds, skip - rate * SKIP_SECONDS)
 				}
 				// Fairy holds Vanguard corpses; the other four non-gemstone types hold the usual mix.
 				total += weight * (count * fairySkip - rate * SKIP_SECONDS)

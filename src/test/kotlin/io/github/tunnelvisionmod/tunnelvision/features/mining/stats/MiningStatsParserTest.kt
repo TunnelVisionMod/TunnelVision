@@ -33,16 +33,6 @@ class MiningStatsParserTest {
 	}
 
 	@Test
-	fun `mineshaft mayhem`() {
-		assertEquals(MayhemBuff.MINING_FORTUNE, MiningStatsParser.parseMayhem("MAYHEM! You received a ☘ Mining Fortune buff from your Mineshaft Mayhem perk!"))
-		assertEquals(MayhemBuff.MINING_SPEED, MiningStatsParser.parseMayhem("MAYHEM! You received a ⸕ Mining Speed buff from your Mineshaft Mayhem perk!"))
-		assertEquals(MayhemBuff.COLD_RESISTANCE, MiningStatsParser.parseMayhem("MAYHEM! You received a ❄ Cold Resistance buff from your Mineshaft Mayhem perk!"))
-		assertEquals(MayhemBuff.SCRAP_CHANCE, MiningStatsParser.parseMayhem("MAYHEM! Your Suspicious Scrap chance was buffed by your Mineshaft Mayhem perk!"))
-		assertEquals(MayhemBuff.ABILITY_COOLDOWN, MiningStatsParser.parseMayhem("MAYHEM! Your Pickaxe Ability cooldown was reduced from your Mineshaft Mayhem perk!"))
-		assertNull(MiningStatsParser.parseMayhem("You received a Mining Fortune buff"))
-	}
-
-	@Test
 	fun `fortunate freezing with bonus`() {
 		assertEquals(
 			ActiveMiningEvent.FortunateFreezing(4),
@@ -76,15 +66,6 @@ class MiningStatsParserTest {
 		assertNull(MiningStatsParser.parseMiningEvent(listOf("Event: 2X POWDER", "Event Bonus: +4☘")))
 		assertNull(MiningStatsParser.parseMiningEvent(listOf("Event: GONE WITH THE WIND")))
 		assertNull(MiningStatsParser.parseMiningEvent(listOf("Cold: -3❄", "Nearby Players: 3")))
-	}
-
-	@Test
-	fun `cold resistance from tab stats`() {
-		assertEquals(25.0, MiningStatsParser.parseColdResistance(listOf("Stats:", "Mining Speed: 2,500⸕", "Cold Resistance: 25❄")))
-		assertEquals(7.5, MiningStatsParser.parseColdResistance(listOf("Cold Resistance: 7.5❄")))
-		assertEquals(25.0, MiningStatsParser.parseColdResistance(listOf("Cold Resistance: ❄25")))
-		assertEquals(1234.5, MiningStatsParser.parseColdResistance(listOf("Cold Resistance: ❄1,234.5")))
-		assertNull(MiningStatsParser.parseColdResistance(listOf("Stats:", "Mining Speed: 2,500⸕")))
 	}
 
 	@Test

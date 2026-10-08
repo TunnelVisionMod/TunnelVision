@@ -11,7 +11,9 @@ import io.github.tunnelvisionmod.tunnelvision.data.bazaar.Bazaar
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalState
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.Fossil
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.MineshaftRole
+import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.MineshaftMayhem
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.MineshaftState
+import io.github.tunnelvisionmod.tunnelvision.data.value.ColdResistance
 import io.github.tunnelvisionmod.tunnelvision.data.value.ShaftVerdict
 import io.github.tunnelvisionmod.tunnelvision.features.forge.crystals.CrystalNotifications
 import io.github.tunnelvisionmod.tunnelvision.features.forge.notification.ForgeNotification
@@ -83,6 +85,8 @@ object TunnelVision : ClientModInitializer {
 		MineshaftState.init()
 		MineshaftRole.init()
 		CrystalState.init()
+		MineshaftMayhem.init()
+		ColdResistance.init()
 		ShaftVerdict.init()
 		Fossil.init()
 
