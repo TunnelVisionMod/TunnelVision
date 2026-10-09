@@ -6,6 +6,7 @@ import io.github.tunnelvisionmod.tunnelvision.TunnelVision.mc
 import net.minecraft.client.Camera
 import net.minecraft.client.gui.components.ChatComponent
 import net.minecraft.client.gui.components.PlayerTabOverlay
+import net.minecraft.client.gui.components.toasts.ToastManager
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.renderer.rendertype.RenderSetup
 import net.minecraft.client.renderer.rendertype.RenderType
@@ -16,6 +17,7 @@ object Compat {
 	val screen: Screen? get() = mc.screen
 	val chat: ChatComponent get() = mc.gui.chat
 	val tabList: PlayerTabOverlay get() = mc.gui.tabList
+	val toasts: ToastManager get() = mc.toastManager
 	val camera: Camera get() = mc.gameRenderer.mainCamera
 
 	fun setScreen(screen: Screen?) = mc.setScreen(screen)

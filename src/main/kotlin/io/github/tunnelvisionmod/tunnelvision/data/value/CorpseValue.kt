@@ -61,7 +61,7 @@ object CorpseValue {
 	 */
 	fun keyCost(type: CorpseType): Double? {
 		val product = type.keyProductId ?: return 0.0
-		val prices = Bazaar.price(product) ?: return null
+		val prices = Bazaar.livePrice(product) ?: return null
 		return if (type == CorpseType.VANGUARD) prices.sellOffer else prices.instantSell
 	}
 

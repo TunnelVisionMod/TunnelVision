@@ -37,4 +37,24 @@ class BazaarTest {
 	fun `broken lowest bin feed has no prices`() {
 		assertTrue(Bazaar.parseLowestBins("<html>525</html>").isEmpty())
 	}
+
+	@Test
+	fun `live prices are capped at their median`() {
+		val live = BazaarPrices(sellOffer = 41_569.0, instantSell = 22_192.0)
+		val median = MedianPrices(sellOffer = 22_609.0, instantSell = 20_238.0, fetchedAt = 0L)
+		assertEquals(BazaarPrices(sellOffer = 22_609.0, instantSell = 20_238.0), Bazaar.capped(live, median))
+	}
+
+	@Test
+	fun `prices below their median stay live`() {
+		val live = BazaarPrices(sellOffer = 18_000.0, instantSell = 16_000.0)
+		val median = MedianPrices(sellOffer = 22_609.0, instantSell = 20_238.0, fetchedAt = 0L)
+		assertEquals(live, Bazaar.capped(live, median))
+	}
+
+	@Test
+	fun `no median means live prices`() {
+		val live = BazaarPrices(sellOffer = 41_569.0, instantSell = 22_192.0)
+		assertEquals(live, Bazaar.capped(live, null))
+	}
 }
