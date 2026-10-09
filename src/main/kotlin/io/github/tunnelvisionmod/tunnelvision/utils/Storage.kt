@@ -17,6 +17,17 @@ class StorageData {
 
 	@field:Expose
 	var coldResistancePeaks: MutableList<Double> = mutableListOf()
+
+	/** Corpse profit per [io.github.tunnelvisionmod.tunnelvision.data.mineshaft.CorpseType] name. */
+	@field:Expose
+	var corpseProfitCoins: MutableMap<String, Double> = mutableMapOf()
+
+	@field:Expose
+	var corpseProfitCorpses: MutableMap<String, Int> = mutableMapOf()
+
+	/** Frozen Corpse RNG meter XP since its last payout, so the payout is not counted twice. */
+	@field:Expose
+	var corpseMeterXp: Double = 0.0
 }
 
 object Storage {

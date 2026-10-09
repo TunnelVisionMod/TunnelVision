@@ -1,5 +1,6 @@
 package io.github.tunnelvisionmod.tunnelvision.core.commands
 
+import com.mojang.brigadier.arguments.DoubleArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
 import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
@@ -10,10 +11,13 @@ import io.github.tunnelvisionmod.tunnelvision.data.bazaar.PriceHistory
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalState
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalType
 import io.github.tunnelvisionmod.tunnelvision.features.forge.crystals.CrystalNotifications
+import io.github.tunnelvisionmod.tunnelvision.features.mineshaft.corpses.CorpseTracker
 import io.github.tunnelvisionmod.tunnelvision.features.mineshaft.routes.GemstoneRoute
 import io.github.tunnelvisionmod.tunnelvision.features.mineshaft.routes.RouteLibrary
 import io.github.tunnelvisionmod.tunnelvision.features.mineshaft.routes.RouteRunner
 import io.github.tunnelvisionmod.tunnelvision.utils.ChatUtils
+import io.github.tunnelvisionmod.tunnelvision.utils.formatCoins
+import io.github.tunnelvisionmod.tunnelvision.utils.formatPrice
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal
@@ -61,6 +65,7 @@ object TunnelVisionCommand {
 						})
 						.then(crystalCommand())
 						.then(routeCommand())
+						.then(corpsesCommand())
 				)
 			}
 		}
@@ -72,6 +77,49 @@ object TunnelVisionCommand {
 	 * toggle one, `/tv crystal off` to go back to the real data, and `/tv crystal entry` to replay the
 	 * entry notification.
 	 */
+	/** `/tv corpses` reports the running corpse profit, `/tv corpses reset` clears it. */
+	private fun corpsesCommand() = literal("corpses")
+		.executes {
+			showCorpseProfit()
+			1
+		}
+		.then(literal("reset").executes {
+			CorpseTracker.reset()
+			ChatUtils.send(Component.literal("Corpse profit reset.").withStyle(ChatFormatting.GREEN))
+			1
+		})
+		.then(
+			literal("meter").then(
+				argument("xp", DoubleArgumentType.doubleArg(0.0)).executes { context ->
+					val xp = DoubleArgumentType.getDouble(context, "xp")
+					CorpseTracker.setMeter(xp)
+					ChatUtils.send(
+						Component.literal("RNG meter set to " + formatPrice(xp) + " / " + formatPrice(CorpseTracker.meterNeeded))
+							.withStyle(ChatFormatting.GREEN),
+					)
+					1
+				},
+			),
+		)
+
+	private fun showCorpseProfit() {
+		val total = CorpseTracker.overall
+		if (total.corpses == 0) {
+			ChatUtils.send(Component.literal("No corpses looted yet.").withStyle(ChatFormatting.GRAY))
+			return
+		}
+		val color = if (total.coins < 0) ChatFormatting.RED else ChatFormatting.GREEN
+		ChatUtils.send(
+			Component.literal(total.corpses.toString() + " corpses: ").withStyle(ChatFormatting.GRAY)
+				.append(Component.literal(formatCoins(total.coins)).withStyle(color))
+				.append(
+					Component.literal(
+						"  RNG meter " + formatPrice(CorpseTracker.meterProgress) + " / " + formatPrice(CorpseTracker.meterNeeded),
+					).withStyle(ChatFormatting.DARK_GRAY),
+				),
+		)
+	}
+
 	private fun crystalCommand() = literal("crystal")
 		.requires { ConfigManager.config.dev.debugMode }
 		.executes {

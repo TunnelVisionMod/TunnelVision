@@ -4,6 +4,7 @@ import com.google.gson.annotations.Expose
 import io.github.notenoughupdates.moulconfig.annotations.Accordion
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption
 import io.github.tunnelvisionmod.tunnelvision.features.mineshaft.corpses.BlueCheeseCorpseLockConfig
+import io.github.tunnelvisionmod.tunnelvision.features.mineshaft.corpses.CorpseTrackerConfig
 import io.github.tunnelvisionmod.tunnelvision.features.mineshaft.corpses.MineshaftWaypointsConfig
 
 class CorpsesConfig {
@@ -24,4 +25,10 @@ class CorpsesConfig {
 	@ConfigOption(name = "Mineshaft Waypoints", desc = "Waypoints for corpses and the fossil.")
 	@Accordion
 	var mineshaftWaypoints = MineshaftWaypointsConfig()
+
+	@Expose
+	@JvmField
+	@ConfigOption(name = "Corpse Tracker", desc = "Price what a corpse dropped and track the profit per corpse type.")
+	@Accordion
+	var corpseTracker = CorpseTrackerConfig()
 }
