@@ -8,6 +8,7 @@ import io.github.tunnelvisionmod.tunnelvision.core.hud.HudManager
 import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSounds
 import io.github.tunnelvisionmod.tunnelvision.core.update.Updater
 import io.github.tunnelvisionmod.tunnelvision.data.bazaar.Bazaar
+import io.github.tunnelvisionmod.tunnelvision.data.bazaar.PriceHistory
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalState
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.Fossil
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.MineshaftRole
@@ -15,6 +16,7 @@ import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.MineshaftMayhem
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.MineshaftState
 import io.github.tunnelvisionmod.tunnelvision.data.value.ColdResistance
 import io.github.tunnelvisionmod.tunnelvision.data.value.ShaftVerdict
+import io.github.tunnelvisionmod.tunnelvision.data.value.ValuedProducts
 import io.github.tunnelvisionmod.tunnelvision.features.forge.crystals.CrystalNotifications
 import io.github.tunnelvisionmod.tunnelvision.features.forge.notification.ForgeNotification
 import io.github.tunnelvisionmod.tunnelvision.features.mining.lantern.LanternReminder
@@ -82,6 +84,7 @@ object TunnelVision : ClientModInitializer {
 		Sidebar.register()
 
 		Bazaar.init()
+		PriceHistory.init(ValuedProducts.inPriority)
 		MineshaftState.init()
 		MineshaftRole.init()
 		CrystalState.init()

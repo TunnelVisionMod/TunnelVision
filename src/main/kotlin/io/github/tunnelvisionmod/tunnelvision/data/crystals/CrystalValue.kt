@@ -30,8 +30,8 @@ object CrystalValue {
 		val gem = crystal.displayName.uppercase()
 		return worth(
 			perfect = Bazaar.price("PERFECT_${gem}_GEM")?.sellOffer,
-			fineBuyOrder = Bazaar.price("FINE_${gem}_GEM")?.instantSell,
-			flawlessInstaBuy = Bazaar.price("FLAWLESS_${gem}_GEM")?.sellOffer,
+			fineBuyOrder = Bazaar.livePrice("FINE_${gem}_GEM")?.instantSell,
+			flawlessInstaBuy = Bazaar.livePrice("FLAWLESS_${gem}_GEM")?.sellOffer,
 		)
 	}
 

@@ -6,6 +6,7 @@ import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudManager
 import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSounds
 import io.github.tunnelvisionmod.tunnelvision.core.update.Updater
+import io.github.tunnelvisionmod.tunnelvision.data.bazaar.PriceHistory
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalState
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalType
 import io.github.tunnelvisionmod.tunnelvision.features.forge.crystals.CrystalNotifications
@@ -54,6 +55,10 @@ object TunnelVisionCommand {
 									1
 								}),
 						)
+						.then(literal("prices").executes {
+							PriceHistory.refresh(announce = true)
+							1
+						})
 						.then(crystalCommand())
 						.then(routeCommand())
 				)

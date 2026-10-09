@@ -50,7 +50,25 @@ object Bazaar {
 		EventBus.on<ClientTickEvent> { if (SkyBlock.isOnMiningIsland) refreshIfStale() }
 	}
 
-	fun price(productId: String): BazaarPrices? = prices[productId]
+	/**
+	 * Live prices capped at their 7-day median, so a bought-out product reads at its usual price.
+	 * For what we sell; costs use [livePrice], since capping a cost would flatter the verdict.
+	 */
+	fun price(productId: String): BazaarPrices? {
+		val live = prices[productId] ?: return null
+		return capped(live, PriceHistory.median(productId))
+	}
+
+	fun livePrice(productId: String): BazaarPrices? = prices[productId]
+
+	fun capped(live: BazaarPrices, median: MedianPrices?): BazaarPrices {
+		if (median == null) return live
+		return BazaarPrices(sellOffer = minOf(live.sellOffer, median.sellOffer), instantSell = minOf(live.instantSell, median.instantSell))
+	}
+
+	internal fun pricesChanged() {
+		loads.incrementAndGet()
+	}
 
 	/** The lowest BIN for an auction-house item, or null until the feed has loaded or if it is not listed. */
 	fun lowestBin(itemId: String): Double? = lowestBins[itemId]
@@ -66,6 +84,13 @@ object Bazaar {
 				}
 				nextFetch = System.currentTimeMillis() + if (parsed.isNotEmpty()) REFRESH_MS else RETRY_MS
 				Debug.log { "Bazaar: loaded ${parsed.size} products" }
+				Debug.log {
+					val capped = parsed.mapNotNull { (id, live) ->
+						val cap = capped(live, PriceHistory.median(id))
+						if (cap == live) null else "$id ${live.sellOffer}/${live.instantSell} -> ${cap.sellOffer}/${cap.instantSell}"
+					}
+					"Bazaar: ${capped.size} capped at their 7-day median" + capped.joinToString(prefix = ": ").takeIf { capped.isNotEmpty() }.orEmpty()
+				}
 			}
 			.exceptionally { error ->
 				TunnelVision.logger.warn("Failed to load bazaar prices: ${error.message}")
