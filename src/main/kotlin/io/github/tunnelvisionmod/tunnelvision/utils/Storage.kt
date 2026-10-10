@@ -17,6 +17,25 @@ class StorageData {
 
 	@field:Expose
 	var coldResistancePeaks: MutableList<Double> = mutableListOf()
+
+	/** Corpse profit per [io.github.tunnelvisionmod.tunnelvision.data.mineshaft.CorpseType] name. */
+	@field:Expose
+	var corpseProfitCoins: MutableMap<String, Double> = mutableMapOf()
+
+	@field:Expose
+	var corpseProfitCorpses: MutableMap<String, Int> = mutableMapOf()
+
+	/** Frozen Corpse RNG meter XP since its last payout, so the payout is not counted twice. */
+	@field:Expose
+	var corpseMeterXp: Double = 0.0
+
+	/** False until the RNG Meter menu has been read, and again after every Shattered Locket drop. */
+	@field:Expose
+	var corpseMeterSynced: Boolean = false
+
+	/** Whether the meter is set to the Shattered Locket, null until the RNG Meter menu has said. */
+	@field:Expose
+	var corpseMeterLocketSelected: Boolean? = null
 }
 
 object Storage {

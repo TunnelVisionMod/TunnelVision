@@ -27,6 +27,9 @@ object CorpseValue {
 
 	fun locketCoins(): Double = Bazaar.lowestBin(LOCKET_ID) ?: LOCKET_FALLBACK
 
+	/** The RNG meter attribute, in percent. Set from the shared loot setting so tests can leave it at 0. */
+	var meterBonusPercent: () -> Int = { 0 }
+
 	fun table(type: CorpseType): CorpseTable = when (type) {
 		CorpseType.LAPIS -> CorpseLootTables.LAPIS
 		CorpseType.UMBER, CorpseType.TUNGSTEN -> CorpseLootTables.UMBER_TUNGSTEN
@@ -52,8 +55,11 @@ object CorpseValue {
 		return total
 	}
 
+	/** Meter XP one corpse grants, with the RNG meter attribute applied. */
+	fun meterXp(type: CorpseType): Double = table(type).meterXp * (1 + meterBonusPercent() / 100.0)
+
 	/** Coins the RNG meter XP from one corpse is worth, as a fraction of a Shattered Locket. */
-	fun meterValue(type: CorpseType): Double = table(type).meterXp / LOCKET_METER_XP * locketCoins()
+	fun meterValue(type: CorpseType): Double = meterXp(type) / LOCKET_METER_XP * locketCoins()
 
 	/**
 	 * What the key costs. Umber and Tungsten keys are stocked up on with buy orders before a mining
@@ -75,7 +81,8 @@ object CorpseValue {
 	private fun CorpseDropItem.isLocked(lockedCrystals: Set<CrystalType>): Boolean =
 		this is CorpseDropItem.Crystal && crystal in lockedCrystals
 
-	private fun itemValue(item: CorpseDropItem, priceType: BazaarPriceType): Double? = when (item) {
+	/** Coins one [item] is worth, or null while a price it needs is missing. Also prices real drops. */
+	fun itemValue(item: CorpseDropItem, priceType: BazaarPriceType): Double? = when (item) {
 		is CorpseDropItem.Auction -> Bazaar.lowestBin(item.itemId) ?: item.fallback
 		is CorpseDropItem.Bazaar -> Bazaar.price(item.productId)?.let { priceType.of(it) }
 		is CorpseDropItem.Crystal -> CrystalValue.of(item.crystal)

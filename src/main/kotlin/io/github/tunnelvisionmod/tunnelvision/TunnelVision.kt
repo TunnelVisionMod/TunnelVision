@@ -21,6 +21,7 @@ import io.github.tunnelvisionmod.tunnelvision.features.forge.crystals.CrystalNot
 import io.github.tunnelvisionmod.tunnelvision.features.forge.notification.ForgeNotification
 import io.github.tunnelvisionmod.tunnelvision.features.mining.lantern.LanternReminder
 import io.github.tunnelvisionmod.tunnelvision.features.mineshaft.corpses.BlueCheeseCorpseLock
+import io.github.tunnelvisionmod.tunnelvision.features.mineshaft.corpses.CorpseTracker
 import io.github.tunnelvisionmod.tunnelvision.features.mineshaft.corpses.MineshaftWaypoints
 import io.github.tunnelvisionmod.tunnelvision.features.mineshaft.cutloose.CutLooseTracker
 import io.github.tunnelvisionmod.tunnelvision.features.mineshaft.routes.GemstoneRoutes
@@ -60,6 +61,7 @@ object TunnelVision : ClientModInitializer {
 		BlueCheeseCorpseLock,
 		CutLooseTracker,
 		MineshaftWaypoints,
+		CorpseTracker,
 		MineshaftPartyShare,
 		WrongGearWarning,
 		HidePristineMessages,

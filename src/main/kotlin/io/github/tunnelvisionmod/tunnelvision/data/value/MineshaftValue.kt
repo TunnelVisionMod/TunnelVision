@@ -114,6 +114,7 @@ object MineshaftValue {
 		val openVanguards: Boolean,
 		val lockedCrystals: Set<CrystalType>,
 		val coldResistance: Double,
+		val meterBonus: Int = CorpseValue.meterBonusPercent(),
 	)
 
 	private data class CacheKey(val generation: Int, val inputs: Inputs)

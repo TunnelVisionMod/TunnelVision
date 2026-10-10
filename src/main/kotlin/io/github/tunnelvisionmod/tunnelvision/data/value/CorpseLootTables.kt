@@ -37,6 +37,13 @@ data class CorpseTable(val rolls: Double, val meterXp: Double, val drops: List<C
  * Only the 5 crystals listed here drop from corpses; Jasper and Ruby come from crystal mineshafts.
  */
 object CorpseLootTables {
+	/**
+	 * The two auction-only drops, named once so the loot tables and the drop-name lookup cannot
+	 * drift apart on the id or the fallback.
+	 */
+	val CAGED_WISP = CorpseDropItem.Auction("CAGED_WISP", 40_000_000.0)
+	val SHATTERED_LOCKET = CorpseDropItem.Auction(CorpseValue.LOCKET_ID, CorpseValue.LOCKET_FALLBACK)
+
 	/** Lapis corpses: 3-6 rolls, 4.902 with maxed Gifts from the Departed, a Blue Cheese drill and Corpse Milestone 6. */
 	val LAPIS = CorpseTable(
 		rolls = 4.902,
@@ -134,7 +141,7 @@ object CorpseLootTables {
 			CorpseDrop(CorpseDropItem.Bazaar("UMBER_PLATE"), amount = 1.0, weight = 5),
 			CorpseDrop(CorpseDropItem.Bazaar("FROZEN_SCUTE"), amount = 1.0, weight = 4),
 			CorpseDrop(CorpseDropItem.Bazaar("SKELETON_KEY"), amount = 1.0, weight = 4),
-			CorpseDrop(CorpseDropItem.Auction("CAGED_WISP", 40_000_000.0), amount = 1.0, weight = 2),
+			CorpseDrop(CAGED_WISP, amount = 1.0, weight = 2),
 		),
 	)
 
@@ -178,10 +185,10 @@ object CorpseLootTables {
 			CorpseDrop(CorpseDropItem.Bazaar("UMBER_PLATE"), amount = 1.0, weight = 30),
 			CorpseDrop(CorpseDropItem.Bazaar("TUNGSTEN_KEY"), amount = 4.0, weight = 20),
 			CorpseDrop(CorpseDropItem.Bazaar("UMBER_KEY"), amount = 4.0, weight = 20),
-			CorpseDrop(CorpseDropItem.Auction("CAGED_WISP", 40_000_000.0), amount = 1.0, weight = 10),
+			CorpseDrop(CAGED_WISP, amount = 1.0, weight = 10),
 			CorpseDrop(CorpseDropItem.Bazaar("FROZEN_SCUTE"), amount = 1.0, weight = 10),
 			CorpseDrop(CorpseDropItem.Bazaar("SKELETON_KEY"), amount = 1.0, weight = 10),
-			CorpseDrop(CorpseDropItem.Auction(CorpseValue.LOCKET_ID, CorpseValue.LOCKET_FALLBACK), amount = 1.0, weight = 5),
+			CorpseDrop(SHATTERED_LOCKET, amount = 1.0, weight = 5),
 		),
 	)
 

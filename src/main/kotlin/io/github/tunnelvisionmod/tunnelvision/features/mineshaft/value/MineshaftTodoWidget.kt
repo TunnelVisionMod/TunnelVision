@@ -22,13 +22,6 @@ object MineshaftTodoWidget : Feature {
 		HudManager.register(Widget)
 	}
 
-	private fun CorpseType.color(): ChatFormatting = when (this) {
-		CorpseType.LAPIS -> ChatFormatting.BLUE
-		CorpseType.UMBER -> ChatFormatting.GOLD
-		CorpseType.TUNGSTEN -> ChatFormatting.GRAY
-		CorpseType.VANGUARD -> ChatFormatting.AQUA
-	}
-
 	private fun header(shouldMine: Boolean?): Component {
 		val header = Component.literal("Mineshaft To-Dos").withStyle(ChatFormatting.GOLD)
 		shouldMine ?: return header
@@ -45,7 +38,7 @@ object MineshaftTodoWidget : Feature {
 
 	private fun line(todo: Todo): Component = when (todo) {
 		is Todo.Corpse -> {
-			val line = Component.literal("${todo.type.tabName} ×${todo.count}").withStyle(todo.type.color())
+			val line = Component.literal("${todo.type.tabName} ×${todo.count}").withStyle(todo.type.color)
 			if (todo.hasKey) line else line.append(Component.literal(" · no ${todo.type.keyName}").withStyle(ChatFormatting.RED))
 		}
 		Todo.Fossil -> Component.literal("Mine the Fossil").withStyle(ChatFormatting.LIGHT_PURPLE)

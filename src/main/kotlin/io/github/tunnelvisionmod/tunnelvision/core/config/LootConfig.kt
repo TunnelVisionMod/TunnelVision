@@ -3,6 +3,7 @@ package io.github.tunnelvisionmod.tunnelvision.core.config
 import com.google.gson.annotations.Expose
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption
 
 class LootConfig {
@@ -20,4 +21,13 @@ class LootConfig {
 	)
 	@ConfigEditorBoolean
 	var openVanguards = true
+
+	@Expose
+	@JvmField
+	@ConfigOption(
+		name = "RNG Meter Bonus",
+		desc = "Extra Frozen Corpse RNG meter XP from your attribute, in percent. Used by §eMineshaft Value §7and §eCorpse Tracker§7.",
+	)
+	@ConfigEditorSlider(minValue = 0f, maxValue = 10f, minStep = 1f)
+	var rngMeterBonus = 0
 }
