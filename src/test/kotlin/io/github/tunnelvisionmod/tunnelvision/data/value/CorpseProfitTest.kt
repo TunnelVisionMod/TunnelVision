@@ -4,6 +4,7 @@ import io.github.tunnelvisionmod.tunnelvision.core.config.BazaarPriceType
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.CorpseType
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.LootedItem
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -35,6 +36,12 @@ class CorpseProfitTest {
 		} finally {
 			CorpseValue.meterBonusPercent = { 0 }
 		}
+	}
+
+	@Test
+	fun `vanguards follow the setting while their price is unknown`() {
+		assertTrue(CorpseValue.opensVanguards(true, BazaarPriceType.SELL_OFFER, emptySet()))
+		assertFalse(CorpseValue.opensVanguards(false, BazaarPriceType.SELL_OFFER, emptySet()))
 	}
 
 	@Test

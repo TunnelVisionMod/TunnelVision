@@ -55,14 +55,16 @@ object ShaftVerdict {
 		val type = MineshaftState.type ?: return null
 		val corpses = corpses() ?: return null
 		val coldResistance = ColdResistance.forCurrentShaft
+		val priceType = ConfigManager.config.general.bazaarPrice
+		val locked = lockedCrystals()
 		return MineshaftValue.evaluate(
 			type = type,
 			corpses = corpses,
-			priceType = ConfigManager.config.general.bazaarPrice,
+			priceType = priceType,
 			mode = loot.lootMode,
 			crystalsFull = CrystalState.corpseCrystalsCarried,
-			openVanguards = loot.openVanguards,
-			lockedCrystals = lockedCrystals(),
+			openVanguards = CorpseValue.opensVanguards(loot.openVanguards, priceType, locked),
+			lockedCrystals = locked,
 			coldResistance = coldResistance,
 			loopColdResistance = ColdResistance.forLoop,
 		)?.also {
