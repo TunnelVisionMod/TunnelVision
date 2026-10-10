@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.DoubleArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
 import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
+import io.github.tunnelvisionmod.tunnelvision.core.config.NewSettings
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudManager
 import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSounds
 import io.github.tunnelvisionmod.tunnelvision.core.update.Updater
@@ -58,6 +59,21 @@ object TunnelVisionCommand {
 									Updater.installOnExit()
 									1
 								}),
+						)
+						.then(
+							literal("new")
+								.executes {
+									NewSettings.announce()
+									1
+								}
+								.then(literal("show").executes {
+									NewSettings.show()
+									1
+								})
+								.then(literal("go").then(argument("path", StringArgumentType.greedyString()).executes {
+									NewSettings.goTo(StringArgumentType.getString(it, "path"))
+									1
+								})),
 						)
 						.then(literal("prices").executes {
 							PriceHistory.refresh(announce = true)

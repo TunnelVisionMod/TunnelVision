@@ -2,6 +2,7 @@ package io.github.tunnelvisionmod.tunnelvision.core.config
 
 import io.github.notenoughupdates.moulconfig.gui.GuiContext
 import io.github.notenoughupdates.moulconfig.gui.GuiElementComponent
+import io.github.notenoughupdates.moulconfig.gui.MoulConfigEditor
 import io.github.notenoughupdates.moulconfig.managed.ManagedConfig
 import io.github.notenoughupdates.moulconfig.platform.MoulConfigScreenComponent
 import io.github.tunnelvisionmod.tunnelvision.TunnelVision
@@ -25,15 +26,23 @@ object ConfigManager {
 
 	fun save() = managed.saveToFile()
 
-	fun createScreen(parent: Screen?): Screen =
-		object : MoulConfigScreenComponent(Component.literal("TunnelVision"), GuiContext(GuiElementComponent(managed.getEditor())), parent) {
+	/** A fresh menu editor; MoulConfig builds a new one on every call. */
+	fun createEditor(): MoulConfigEditor<TunnelVisionConfig> =
+		managed.getEditor().also { it.setSearchFunction(NewSettings::fulfillsSearch) }
+
+	fun createScreen(parent: Screen?, setup: (MoulConfigEditor<TunnelVisionConfig>) -> Unit = {}): Screen {
+		val editor = createEditor()
+		val screen = object : MoulConfigScreenComponent(Component.literal("TunnelVision"), GuiContext(GuiElementComponent(editor)), parent) {
 			override fun removed() {
 				super.removed()
 				save()
 			}
 		}
+		setup(editor)
+		return screen
+	}
 
-	fun openScreen() {
-		TunnelVision.mc.schedule { Compat.setScreen(createScreen(null)) }
+	fun openScreen(setup: (MoulConfigEditor<TunnelVisionConfig>) -> Unit = {}) {
+		TunnelVision.mc.schedule { Compat.setScreen(createScreen(null, setup)) }
 	}
 }
