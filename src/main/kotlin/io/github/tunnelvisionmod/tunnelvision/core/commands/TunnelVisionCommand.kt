@@ -45,21 +45,10 @@ object TunnelVisionCommand {
 							TitleSounds.openScreen()
 							1
 						})
-						.then(
-							literal("update")
-								.executes {
-									Updater.command()
-									1
-								}
-								.then(literal("now").executes {
-									Updater.installNow()
-									1
-								})
-								.then(literal("onexit").executes {
-									Updater.installOnExit()
-									1
-								}),
-						)
+						.then(literal("update").executes {
+							Updater.command()
+							1
+						})
 						.then(
 							literal("new")
 								.executes {
