@@ -21,6 +21,13 @@ enum class MiningEffect(
 		defaultDurationSeconds = 60 * 60,
 		isPotion = false,
 		itemName = "Filet O' Fortune",
+	),
+	FIESTA_FLASK(
+		tabName = "Fiesta Flask",
+		displayName = "Fiesta Flask",
+		defaultDurationSeconds = 60 * 60,
+		isPotion = false,
+		itemName = "Fiesta Flask",
 	);
 
 	fun durationSeconds(potionDurationSeconds: Int?, affinityBonusPercent: Int): Int {

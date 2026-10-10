@@ -74,6 +74,12 @@ class EffectParserTest {
 	}
 
 	@Test
+	fun `effects menu reads the fiesta flask with or without a level`() {
+		assertEquals(TabEffect(MiningEffect.FIESTA_FLASK, 59 * 60 + 4, 1), EffectParser.parseMenuItem("Fiesta Flask", listOf("Remaining: 59:04")))
+		assertEquals(TabEffect(MiningEffect.FIESTA_FLASK, 59 * 60 + 4, 1), EffectParser.parseMenuItem("Fiesta Flask I", listOf("Remaining: 59:04")))
+	}
+
+	@Test
 	fun `effects menu ignores other items`() {
 		assertNull(EffectParser.parseMenuItem("Smoldering Polarization I", listOf("Remaining: 12:34")))
 		assertNull(EffectParser.parseMenuItem("Cold Resistance IV", listOf("Click to view!")))
