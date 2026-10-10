@@ -60,7 +60,7 @@ jobs:
               '{
                 name: $name,
                 version_number: $number,
-                changelog: $release[0].body,
+                changelog: ($release[0].body | (index("## What'"'"'s Changed") // 0) as $start | .[$start:]),
                 game_versions: [$mc],
                 loaders: ["fabric"],
                 version_type: $type,
