@@ -29,6 +29,7 @@ object ShaftVerdict {
 	private var verdict: MineshaftVerdict? = null
 
 	fun init() {
+		CorpseValue.meterBonusPercent = { loot.rngMeterBonus }
 		EventBus.on<LocationChangedEvent> { onLocationChanged(it) }
 	}
 

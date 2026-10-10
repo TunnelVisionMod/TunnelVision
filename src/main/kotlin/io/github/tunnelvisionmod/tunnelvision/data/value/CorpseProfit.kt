@@ -58,15 +58,11 @@ object CorpseProfit {
 	/**
 	 * [includeMeter] off leaves the meter out of [CorpseProfitBreakdown.net] as well as out of the
 	 * message, so what is shown always adds up to what is claimed.
-	 */
-	/**
-	 * [includeMeter] off leaves the meter out of [CorpseProfitBreakdown.net] as well as out of the
-	 * message, so what is shown always adds up to what is claimed.
 	 *
 	 * [meterPayout] says this corpse is the one the meter paid out on. The payout item is then
 	 * priced but not counted: every corpse along the way was already credited its slice of it, so
 	 * counting the item as well would pay for it twice. The caller decides this, because only it
-	 * knows how far along the meter was - a Shattered Pendant can also drop on its own, about as
+	 * knows how far along the meter was - a Shattered Locket can also drop on its own, about as
 	 * often as the meter fills, so the item alone says nothing about where it came from.
 	 */
 	fun of(

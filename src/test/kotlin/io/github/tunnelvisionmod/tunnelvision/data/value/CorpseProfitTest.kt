@@ -26,6 +26,18 @@ class CorpseProfitTest {
 	}
 
 	@Test
+	fun `the rng meter attribute raises the xp and the coins it is worth`() {
+		CorpseValue.meterBonusPercent = { 10 }
+		try {
+			assertEquals(550.0, CorpseValue.meterXp(CorpseType.LAPIS), 1e-9)
+			assertEquals(27_500.0, CorpseValue.meterXp(CorpseType.VANGUARD), 1e-9)
+			assertEquals(5_500_000.0, CorpseValue.meterValue(CorpseType.VANGUARD), 1e-6)
+		} finally {
+			CorpseValue.meterBonusPercent = { 0 }
+		}
+	}
+
+	@Test
 	fun `a lapis corpse needs no key, so its meter alone is profit`() {
 		val breakdown = of(CorpseType.LAPIS)
 		assertEquals(0.0, breakdown.keyCoins)

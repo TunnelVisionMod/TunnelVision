@@ -7,10 +7,10 @@ import kotlin.math.min
  * How far the Frozen Corpse RNG meter has come since its last payout.
  *
  * Every corpse grants meter XP, and the tracker credits that XP as coins as it goes - a corpse is
- * worth its slice of the Shattered Pendant it is working towards. When the meter finally pays out,
- * the Pendant itself must therefore not be counted again, or it is paid for twice.
+ * worth its slice of the Shattered Locket it is working towards. When the meter finally pays out,
+ * the Locket itself must therefore not be counted again, or it is paid for twice.
  *
- * Knowing which Pendant came from the meter is the whole reason this exists. One can also drop on
+ * Knowing which Locket came from the meter is the whole reason this exists. One can also drop on
  * its own, and at roughly the same rate the meter fills, so the drop alone cannot be told apart
  * from the payout - only the progress can.
  *
@@ -36,7 +36,7 @@ class RngMeter(private val needed: Double) {
 
 	/**
 	 * Takes one payout if the meter has filled, leaving any overshoot behind, and reports whether
-	 * it did. A false answer means a Pendant that turned up here dropped on its own.
+	 * it did. A false answer means a Locket that turned up here dropped on its own.
 	 */
 	fun claim(): Boolean {
 		if (!isFull) return false

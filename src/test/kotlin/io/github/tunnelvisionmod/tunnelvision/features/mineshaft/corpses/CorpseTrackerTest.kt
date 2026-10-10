@@ -49,4 +49,13 @@ class CorpseTrackerTest {
 		// 7px is neither 4a nor 5b nor a sum of them.
 		assertEquals(1 to 0, CorpseTracker.spacing(7, narrow, wide))
 	}
+
+	@Test
+	fun `meter amounts are short and never round up to full`() {
+		assertEquals("1.7M", CorpseTracker.meterAmount(1_752_200.0))
+		assertEquals("2.4M", CorpseTracker.meterAmount(2_499_000.0))
+		assertEquals("2.5M", CorpseTracker.meterAmount(2_500_000.0))
+		assertEquals("950k", CorpseTracker.meterAmount(950_700.0))
+		assertEquals("500", CorpseTracker.meterAmount(500.0))
+	}
 }

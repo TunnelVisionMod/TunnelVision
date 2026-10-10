@@ -71,12 +71,6 @@ object TunnelVisionCommand {
 		}
 	}
 
-	/**
-	 * Crystals are rare enough that waiting to find one is no way to test the notifications, so
-	 * this pretends you carry them. `/tv crystal all`, `/tv crystal none`, `/tv crystal <name>` to
-	 * toggle one, `/tv crystal off` to go back to the real data, and `/tv crystal entry` to replay the
-	 * entry notification.
-	 */
 	/** `/tv corpses` reports the running corpse profit, `/tv corpses reset` clears it. */
 	private fun corpsesCommand() = literal("corpses")
 		.executes {
@@ -120,6 +114,12 @@ object TunnelVisionCommand {
 		)
 	}
 
+	/**
+	 * Crystals are rare enough that waiting to find one is no way to test the notifications, so
+	 * this pretends you carry them. `/tv crystal all`, `/tv crystal none`, `/tv crystal <name>` to
+	 * toggle one, `/tv crystal off` to go back to the real data, and `/tv crystal entry` to replay the
+	 * entry notification.
+	 */
 	private fun crystalCommand() = literal("crystal")
 		.requires { ConfigManager.config.dev.debugMode }
 		.executes {

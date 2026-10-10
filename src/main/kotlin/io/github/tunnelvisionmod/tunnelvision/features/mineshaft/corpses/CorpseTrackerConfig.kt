@@ -22,7 +22,7 @@ class CorpseTrackerConfig {
 
 	@Expose
 	@JvmField
-	@ConfigOption(name = "Widget", desc = "Show a HUD widget with the profit per corpse type and overall. Reset it with §e/tv corpses reset§7.")
+	@ConfigOption(name = "Widget", desc = "Show a HUD widget with the profit per corpse type, overall and your RNG meter progress. Reset the profit with §e/tv corpses reset§7.")
 	@ConfigEditorBoolean
 	var widget = true
 

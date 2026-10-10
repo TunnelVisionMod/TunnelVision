@@ -24,6 +24,7 @@ import io.github.tunnelvisionmod.tunnelvision.data.value.LootPrice
 import io.github.tunnelvisionmod.tunnelvision.data.value.ProfitLine
 import io.github.tunnelvisionmod.tunnelvision.utils.ChatUtils
 import io.github.tunnelvisionmod.tunnelvision.utils.Debug
+import io.github.tunnelvisionmod.tunnelvision.utils.LocationTracker
 import io.github.tunnelvisionmod.tunnelvision.utils.SkyBlock
 import io.github.tunnelvisionmod.tunnelvision.utils.removeFormatting
 import io.github.tunnelvisionmod.tunnelvision.utils.Storage
@@ -32,12 +33,16 @@ import io.github.tunnelvisionmod.tunnelvision.utils.formatPrice
 import io.github.tunnelvisionmod.tunnelvision.utils.loreLines
 import io.github.tunnelvisionmod.tunnelvision.utils.plainName
 import java.util.Optional
+import java.util.Locale
 import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.max
 import net.minecraft.ChatFormatting
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
+import net.minecraft.network.chat.ClickEvent
 import net.minecraft.network.chat.Component
 import net.minecraft.network.chat.FormattedText
+import net.minecraft.network.chat.HoverEvent
 import net.minecraft.network.chat.MutableComponent
 import net.minecraft.network.chat.Style
 
@@ -97,12 +102,33 @@ object CorpseTracker : Feature {
 	/** So opening the meter menu reports once, not every tick it stays open. */
 	private var menuLogged = false
 
+	/**
+	 * Whether [meter] matches the game. Only the RNG Meter menu can confirm it, and a Shattered
+	 * Locket drop unsettles it again: it may be the payout or a drop of its own, and only the menu
+	 * can tell which way the meter went.
+	 */
+	private var synced = false
+
+	/**
+	 * Whether the meter is set to the Shattered Locket, from the menu. A Locket that drops while it
+	 * is not selected cannot be the payout and leaves the meter alone; null means we have not seen.
+	 */
+	private var locketSelected: Boolean? = null
+
+	private val location = LocationTracker()
+	private var remindOnEntry = false
+
+	/** Set from the chat event, which must not print, so the warning goes out on the next tick. */
+	private var sayTooEarly = false
+
 	override fun init() {
 		totals.load(Storage.data.corpseProfitCoins, Storage.data.corpseProfitCorpses)
 		meter.set(Storage.data.corpseMeterXp)
+		synced = Storage.data.corpseMeterSynced
+		locketSelected = Storage.data.corpseMeterLocketSelected
 		EventBus.on<ChatReceivedEvent> { onChat(it) }
 		EventBus.on<ClientTickEvent> { onTick() }
-		EventBus.on<LocationChangedEvent> { onLocationChanged() }
+		EventBus.on<LocationChangedEvent> { onLocationChanged(it) }
 		HudManager.register(Widget)
 	}
 
@@ -114,17 +140,25 @@ object CorpseTracker : Feature {
 
 	val overall: CorpseTotal get() = totals.overall
 
-	/** RNG meter progress towards a Shattered Pendant, for `/tv corpses`. */
+	/** RNG meter progress towards a Shattered Locket, for `/tv corpses`. */
 	val meterProgress: Double get() = meter.progress
 	val meterNeeded: Double get() = CorpseValue.LOCKET_METER_XP
 
 	fun setMeter(xp: Double) {
 		meter.set(xp)
+		synced = true
 		save()
 	}
 
 	private fun onChat(event: ChatReceivedEvent) {
-		if (!config.enabled || !SkyBlock.isInMineshaft) return
+		if (!config.enabled || !SkyBlock.isOnSkyBlock) return
+		RngMeterParser.selectedFromChat(event.text)?.let { selected ->
+			locketSelected = selected
+			save()
+			if (selected && synced && !meter.isFull) sayTooEarly = true
+			return
+		}
+		if (!SkyBlock.isInMineshaft) return
 		val text = event.text.trim()
 
 		CorpseLootParser.corpseType(text)?.let { type ->
@@ -181,8 +215,20 @@ object CorpseTracker : Feature {
 	}
 
 	private fun onTick() {
-		if (!config.enabled) return
+		if (!config.enabled || !SkyBlock.isOnSkyBlock) return
 		readMeterMenu()
+		if (sayTooEarly) {
+			sayTooEarly = false
+			sayTooEarly()
+		}
+		if (remindOnEntry && SkyBlock.isInMineshaft) {
+			remindOnEntry = false
+			when {
+				!synced -> say("Open your RNG meter once so the Corpse Tracker knows your Frozen Corpse XP. ")
+				meter.isFull && locketSelected != true -> sayFull()
+				!meter.isFull && locketSelected == true -> sayTooEarly()
+			}
+		}
 		open?.let { block ->
 			if (++idleTicks >= FLUSH_AFTER_TICKS) {
 				ready += block
@@ -228,27 +274,34 @@ object CorpseTracker : Feature {
 					.take(MENU_DEBUG_LINES)
 					.forEach { (name, line) -> Debug.log { "CorpseTracker:   [$name] $line" } }
 			} else {
-				Debug.log { "CorpseTracker: \"$title\" says ${reading.progress} / ${reading.needed}, we had ${meter.progress}" }
+				Debug.log { "CorpseTracker: \"$title\" says ${reading.progress} / ${reading.needed}, Locket selected: ${reading.locketSelected}, we had ${meter.progress}" }
+				items.filter { RngMeterParser.isLocket(it.plainName()) || RngMeterParser.isFrozenCorpse(it.plainName(), it.loreLines()) }.forEach { item ->
+					Debug.log { "CorpseTracker:   [${item.plainName()}] " + item.loreLines().joinToString(" | ") }
+				}
 				if (reading.needed != null && reading.needed != CorpseValue.LOCKET_METER_XP) {
-					// Either no Shattered Pendant row was found, or it does not cost what we assume.
+					// Either no Shattered Locket row was found, or it does not cost what we assume.
 					// Either way the per-corpse credit is measured against the wrong target.
 					Debug.log {
-						"CorpseTracker: that target is not a Shattered Pendant's ${CorpseValue.LOCKET_METER_XP}" +
-							" - no ${RngMeterParser.PENDANT_NAME} row found, or its cost changed"
+						"CorpseTracker: that target is not a Shattered Locket's ${CorpseValue.LOCKET_METER_XP}" +
+							" - no ${RngMeterParser.LOCKET_NAME} row found, or its cost changed"
 					}
 				}
 			}
 		}
 
 		reading ?: return
-		if (reading.progress == meter.progress) return
+		val selection = reading.locketSelected ?: locketSelected
+		if (synced && reading.progress == meter.progress && selection == locketSelected) return
 		meter.set(reading.progress)
+		synced = true
+		locketSelected = selection
 		save()
 	}
 
-	private fun onLocationChanged() {
+	private fun onLocationChanged(event: LocationChangedEvent) {
 		open = null
 		ready.clear()
+		if (location.isNewLocation(event)) remindOnEntry = true
 	}
 
 	private fun render(block: Block) {
@@ -259,10 +312,15 @@ object CorpseTracker : Feature {
 			return
 		}
 		// Credit this corpse's meter XP first, then see whether it is the corpse that filled it: the
-		// corpse that completes the meter also earns its own slice before paying out.
-		if (config.showMeter) meter.gain(CorpseValue.table(block.type).meterXp)
-		val droppedPendant = block.items.any { CorpseProfit.isMeterReward(CorpseDropNames.itemFor(it.name)) }
-		val meterPayout = config.showMeter && droppedPendant && meter.claim()
+		// corpse that completes the meter also earns its own slice before paying out. The meter is
+		// tracked whether or not it is shown, so turning the line back on finds it where it really is.
+		val wasFull = meter.isFull
+		meter.gain(CorpseValue.meterXp(block.type))
+		val droppedLocket = block.items.any { CorpseProfit.isMeterReward(CorpseDropNames.itemFor(it.name)) }
+		// A Locket the meter was not set to dropped on its own and left the meter where it was. With
+		// the selection unknown, a full meter is taken as the payout, as before.
+		val meterAffected = droppedLocket && locketSelected != false
+		val meterPayout = meterAffected && meter.claim() && config.showMeter
 		val breakdown = CorpseProfit.of(
 			block.type,
 			block.items,
@@ -272,13 +330,42 @@ object CorpseTracker : Feature {
 		)
 		Debug.log { "CorpseTracker: ${block.type} netted ${breakdown.net}, ${breakdown.unpriced} of ${block.items.size} drops unpriced" }
 		breakdown.net?.let { totals.add(block.type, it) }
+		if (meterAffected) synced = false
 		save()
 		if (block.suppressed) lines(breakdown, block.rules).forEach { ChatUtils.sendRaw(it) }
+		when {
+			meterAffected -> say("A Shattered Locket dropped. Open your RNG meter so the Corpse Tracker can re-read your Frozen Corpse XP. ")
+			!wasFull && meter.isFull && locketSelected != true -> sayFull()
+		}
+	}
+
+	private fun sayFull() = say(
+		"Your Frozen Corpse RNG meter is full (${meterAmount(meter.progress)} / ${meterAmount(CorpseValue.LOCKET_METER_XP)}). " +
+			"Set it to the Shattered Locket. ",
+	)
+
+	private fun sayTooEarly() = say(
+		"Your Frozen Corpse RNG meter is set to the Shattered Locket at only " +
+			"${meterAmount(meter.progress)} / ${meterAmount(CorpseValue.LOCKET_METER_XP)}. Reset it until it is full. ",
+	)
+
+	private fun say(text: String) {
+		ChatUtils.send(
+			Component.literal(text).withStyle(ChatFormatting.YELLOW).append(
+				Component.literal("[Open RNG Meter]").withStyle { style ->
+					style.withColor(ChatFormatting.AQUA).withBold(true)
+						.withClickEvent(ClickEvent.RunCommand("/rngmeter"))
+						.withHoverEvent(HoverEvent.ShowText(Component.literal("Run /rngmeter")))
+				},
+			),
+		)
 	}
 
 	private fun save() {
 		totals.saveInto(Storage.data.corpseProfitCoins, Storage.data.corpseProfitCorpses)
 		Storage.data.corpseMeterXp = meter.progress
+		Storage.data.corpseMeterSynced = synced
+		Storage.data.corpseMeterLocketSelected = locketSelected
 		Storage.save()
 	}
 
@@ -301,7 +388,7 @@ object CorpseTracker : Feature {
 		val rows = mutableListOf<Pair<Component, Component>>()
 		breakdown.lines.forEach { rows += label(it) to priceText(it.price, it.fromMeter) }
 		if (breakdown.meterCoins > 0) {
-			val meterXp = CorpseValue.table(breakdown.type).meterXp
+			val meterXp = CorpseValue.meterXp(breakdown.type)
 			rows += Component.literal(INDENT + "RNG Meter +" + formatPrice(meterXp)).withStyle(ChatFormatting.LIGHT_PURPLE) to
 				Component.literal(formatCoins(breakdown.meterCoins)).withStyle(ChatFormatting.GOLD)
 		}
@@ -433,10 +520,10 @@ object CorpseTracker : Feature {
 	 * already counted across every corpse that filled the meter, so it adds nothing here.
 	 */
 	private fun priceText(price: LootPrice, fromMeter: Boolean = false): Component = when (price) {
-		is LootPrice.Coins -> Component.literal(formatCoins(price.total)).withStyle(
-			if (fromMeter) ChatFormatting.DARK_GRAY else ChatFormatting.GOLD,
-			if (fromMeter) ChatFormatting.STRIKETHROUGH else ChatFormatting.GOLD,
-		)
+		is LootPrice.Coins -> {
+			val text = Component.literal(formatCoins(price.total))
+			if (fromMeter) text.withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.STRIKETHROUGH) else text.withStyle(ChatFormatting.GOLD)
+		}
 		LootPrice.Unknown -> Component.literal("?").withStyle(ChatFormatting.DARK_GRAY)
 	}
 
@@ -467,10 +554,34 @@ object CorpseTracker : Feature {
 			.append(Component.literal(" ×" + total.corpses).withStyle(ChatFormatting.DARK_GRAY))
 
 	/** Lays the widget out like the message: values right-aligned, here to the widest row. */
-	private fun widgetLines(totals: List<Pair<String, Pair<ChatFormatting, CorpseTotal>>>): List<Component> {
+	private fun widgetLines(totals: List<Pair<String, Pair<ChatFormatting, CorpseTotal>>>, meterLine: Component): List<Component> {
 		val rows = totals.map { (name, rest) -> widgetLabel(name, rest.first, rest.second) to signed(rest.second.coins) }
-		val width = rows.maxOf { mc.font.width(it.first) + mc.font.width(it.second) } + WIDGET_GAP
-		return listOf(widgetHeader) + rows.map { (label, value) -> row(label, value, width) }
+		val width = (rows.maxOfOrNull { mc.font.width(it.first) + mc.font.width(it.second) } ?: 0) + WIDGET_GAP
+		return listOf(widgetHeader) + rows.map { (label, value) -> row(label, value, width) } + meterLine
+	}
+
+	/** `1.7M`, rounded down so a meter 1,000 XP short of full never reads as full. */
+	fun meterAmount(xp: Double): String = when {
+		xp >= 1_000_000 -> String.format(Locale.ROOT, "%.1fM", floor(xp / 100_000) / 10)
+		xp >= 1_000 -> String.format(Locale.ROOT, "%.0fk", floor(xp / 1_000))
+		else -> String.format(Locale.ROOT, "%.0f", floor(xp))
+	}
+
+	/**
+	 * The meter's progress, with what to do about it when something needs doing: open the menu while
+	 * our count is unconfirmed, select the Locket once it is full. A guess is marked with `~`.
+	 */
+	private fun meterLine(progress: Double, synced: Boolean, locketSelected: Boolean?): Component {
+		val needed = CorpseValue.LOCKET_METER_XP
+		val amount = (if (synced) "" else "~") + meterAmount(progress) + " / " + meterAmount(needed)
+		val text = Component.literal("RNG Meter ").withStyle(ChatFormatting.GRAY)
+		return when {
+			!synced -> text.append(Component.literal("$amount · open /rngmeter").withStyle(ChatFormatting.YELLOW))
+			progress >= needed && locketSelected == true -> text.append(Component.literal("$amount · Locket selected").withStyle(ChatFormatting.LIGHT_PURPLE))
+			locketSelected == true -> text.append(Component.literal("$amount · reset until full").withStyle(ChatFormatting.RED))
+			progress >= needed -> text.append(Component.literal("$amount · set Shattered Locket").withStyle(ChatFormatting.LIGHT_PURPLE))
+			else -> text.append(Component.literal(amount + " (" + (progress / needed * 100).toInt() + "%)").withStyle(ChatFormatting.DARK_GRAY))
+		}
 	}
 
 	object Widget : HudWidget("corpse_tracker", "Corpse Profit", HudPosition(0.02f, 0.3f)) {
@@ -479,11 +590,13 @@ object CorpseTracker : Feature {
 		override fun getLines(): List<Component> {
 			if (!SkyBlock.isOnMiningIsland) return emptyList()
 			val perType = totals.perType
-			if (perType.isEmpty()) return emptyList()
-			return widgetLines(
+			val rows = if (perType.isEmpty()) {
+				emptyList()
+			} else {
 				perType.map { (type, total) -> type.tabName to (type.color to total) } +
-					("Overall" to (ChatFormatting.WHITE to totals.overall)),
-			)
+					("Overall" to (ChatFormatting.WHITE to totals.overall))
+			}
+			return widgetLines(rows, meterLine(meter.progress, synced, locketSelected))
 		}
 
 		override fun getExampleLines() = widgetLines(
@@ -492,6 +605,7 @@ object CorpseTracker : Feature {
 				"Vanguard" to (CorpseType.VANGUARD.color to CorpseTotal(2, -29_400_000.0)),
 				"Overall" to (ChatFormatting.WHITE to CorpseTotal(44, -28_160_000.0)),
 			),
+			meterLine(1_200_000.0, synced = true, locketSelected = false),
 		)
 	}
 }

@@ -28,6 +28,14 @@ class StorageData {
 	/** Frozen Corpse RNG meter XP since its last payout, so the payout is not counted twice. */
 	@field:Expose
 	var corpseMeterXp: Double = 0.0
+
+	/** False until the RNG Meter menu has been read, and again after every Shattered Locket drop. */
+	@field:Expose
+	var corpseMeterSynced: Boolean = false
+
+	/** Whether the meter is set to the Shattered Locket, null until the RNG Meter menu has said. */
+	@field:Expose
+	var corpseMeterLocketSelected: Boolean? = null
 }
 
 object Storage {
