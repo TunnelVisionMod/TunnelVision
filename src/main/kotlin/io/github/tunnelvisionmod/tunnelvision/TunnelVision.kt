@@ -3,6 +3,7 @@ package io.github.tunnelvisionmod.tunnelvision
 import io.github.tunnelvisionmod.tunnelvision.core.Feature
 import io.github.tunnelvisionmod.tunnelvision.core.commands.TunnelVisionCommand
 import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
+import io.github.tunnelvisionmod.tunnelvision.core.config.NewSettings
 import io.github.tunnelvisionmod.tunnelvision.core.events.EventHooks
 import io.github.tunnelvisionmod.tunnelvision.core.hud.HudManager
 import io.github.tunnelvisionmod.tunnelvision.core.sound.TitleSounds
@@ -98,6 +99,7 @@ object TunnelVision : ClientModInitializer {
 		features.forEach { it.init() }
 		TunnelVisionCommand.register()
 		Updater.init()
+		NewSettings.init()
 		logger.info("TunnelVision initialized")
 	}
 }

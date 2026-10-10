@@ -18,6 +18,14 @@ class StorageData {
 	@field:Expose
 	var coldResistancePeaks: MutableList<Double> = mutableListOf()
 
+	/** Every setting path seen so far; null until the first start, which records them silently. */
+	@field:Expose
+	var knownSettings: MutableList<String>? = null
+
+	/** The settings the last update added, for `/tv new`. */
+	@field:Expose
+	var newSettings: MutableList<String> = mutableListOf()
+
 	/** Corpse profit per [io.github.tunnelvisionmod.tunnelvision.data.mineshaft.CorpseType] name. */
 	@field:Expose
 	var corpseProfitCoins: MutableMap<String, Double> = mutableMapOf()
