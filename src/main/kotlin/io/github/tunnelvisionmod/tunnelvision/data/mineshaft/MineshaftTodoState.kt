@@ -5,6 +5,7 @@ import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
 import io.github.tunnelvisionmod.tunnelvision.core.config.LootMode
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalState
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalType
+import io.github.tunnelvisionmod.tunnelvision.data.value.CorpseValue
 import io.github.tunnelvisionmod.tunnelvision.data.value.ShaftVerdict
 import io.github.tunnelvisionmod.tunnelvision.utils.SkyBlock
 import io.github.tunnelvisionmod.tunnelvision.utils.TabList
@@ -51,7 +52,11 @@ object MineshaftTodoState {
 		mode = loot.lootMode,
 		crystalsFull = CrystalState.corpseCrystalsCarried,
 		shouldMine = ShaftVerdict.current()?.shouldMine,
-		openVanguards = loot.openVanguards,
+		openVanguards = CorpseValue.opensVanguards(
+			loot.openVanguards,
+			ConfigManager.config.general.bazaarPrice,
+			if (CrystalState.known) CrystalState.carried else emptySet(),
+		),
 	)
 
 	private fun crystalShaft(): CrystalType? =

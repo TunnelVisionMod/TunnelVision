@@ -71,6 +71,15 @@ object CorpseValue {
 		return if (type == CorpseType.VANGUARD) prices.sellOffer else prices.instantSell
 	}
 
+	/**
+	 * Whether Vanguard corpses get opened: the setting says you buy Skeleton Keys, and then only while
+	 * one pays for its key at today's prices. Opening a loss-making Vanguard in every Fairy shaft
+	 * drags the whole loop rate down and makes mediocre gemstone shafts look worth mining. While a
+	 * price is still missing the setting decides alone.
+	 */
+	fun opensVanguards(setting: Boolean, priceType: BazaarPriceType, lockedCrystals: Set<CrystalType>): Boolean =
+		setting && (net(CorpseType.VANGUARD, priceType, lockedCrystals)?.let { it > 0 } ?: true)
+
 	/** Net coins per looted corpse, or null while any price it needs is missing. */
 	fun net(type: CorpseType, priceType: BazaarPriceType, lockedCrystals: Set<CrystalType> = emptySet()): Double? {
 		val loot = lootValue(type, priceType, lockedCrystals) ?: return null

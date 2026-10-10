@@ -17,7 +17,7 @@ class LootConfig {
 	@JvmField
 	@ConfigOption(
 		name = "Open Vanguard Corpses",
-		desc = "Whether you buy Skeleton Keys to open Vanguard corpses. Off makes them worth nothing in every loot mode, Greedy included, and a Fairy mineshaft worthless.",
+		desc = "Whether you buy Skeleton Keys to open Vanguard corpses. They are still only opened while one pays for its key at current prices. Off makes them worth nothing in every loot mode, Greedy included, and a Fairy mineshaft worthless.",
 	)
 	@ConfigEditorBoolean
 	var openVanguards = true

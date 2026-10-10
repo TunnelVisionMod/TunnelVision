@@ -1,0 +1,84 @@
+name: Modrinth
+
+# Runs when `./gradlew release` publishes a GitHub release, and uploads its two jars to Modrinth as
+# one version per Minecraft version. Needs the MODRINTH_TOKEN secret: a Modrinth personal access
+# token with "Read projects" and "Create versions".
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to upload again, e.g. v1.4.3
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  PROJECT: tunnelvision-isingularity
+  MINECRAFT_VERSIONS: 26.1.2 26.2
+  USER_AGENT: TunnelVisionMod/TunnelVision (github.com/TunnelVisionMod/TunnelVision)
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,body,isPrerelease > release.json
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern 'TunnelVision-*.jar'
+          ls -l TunnelVision-*.jar
+
+      - name: Upload to Modrinth
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "$MODRINTH_TOKEN" ]; then
+            echo "::error::The MODRINTH_TOKEN secret is not set"
+            exit 1
+          fi
+          tag=$(jq -r .tagName release.json)
+          version="${tag#v}"
+          type=$(jq -r 'if .isPrerelease then "beta" else "release" end' release.json)
+          project_id=$(curl -fsS -H "Authorization: $MODRINTH_TOKEN" -H "User-Agent: $USER_AGENT" \
+            "https://api.modrinth.com/v2/project/$PROJECT" | jq -r .id)
+
+          for mc in $MINECRAFT_VERSIONS; do
+            jar="TunnelVision-v$version-$mc.jar"
+            jq -n \
+              --arg name "TunnelVision $version for $mc" \
+              --arg number "$version+$mc" \
+              --arg mc "$mc" \
+              --arg type "$type" \
+              --arg project "$project_id" \
+              --slurpfile release release.json \
+              '{
+                name: $name,
+                version_number: $number,
+                changelog: $release[0].body,
+                game_versions: [$mc],
+                loaders: ["fabric"],
+                version_type: $type,
+                featured: true,
+                project_id: $project,
+                dependencies: [
+                  {project_id: "P7dR8mSH", dependency_type: "required"},
+                  {project_id: "Ha28R6CL", dependency_type: "required"},
+                  {project_id: "1A2mKfBx", dependency_type: "required"},
+                  {project_id: "mOgUt4GM", dependency_type: "optional"}
+                ],
+                file_parts: ["file"],
+                primary_file: "file"
+              }' > data.json
+            curl -fsS -X POST "https://api.modrinth.com/v2/version" \
+              -H "Authorization: $MODRINTH_TOKEN" \
+              -H "User-Agent: $USER_AGENT" \
+              -F "data=<data.json;type=application/json" \
+              -F "file=@$jar;type=application/java-archive" \
+              | jq '{id, name, version_number}'
+          done
