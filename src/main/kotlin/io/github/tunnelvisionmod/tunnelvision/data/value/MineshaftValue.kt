@@ -8,21 +8,27 @@ import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.CorpseLoot
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.CorpseType
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.LootRule
 import io.github.tunnelvisionmod.tunnelvision.data.mineshaft.MineshaftType
+import java.util.concurrent.ConcurrentHashMap
 
-/** The gemstone a mineshaft is made of, and the break-time class it belongs to. */
-enum class GemstoneShaft(private val codePrefix: String, val gemName: String, val group: GemstoneGroup) {
-	RUBY("RUBY", "Ruby", GemstoneGroup.RUBY),
-	OPAL("OPAL", "Opal", GemstoneGroup.SOFT),
-	AMETHYST("AMET", "Amethyst", GemstoneGroup.SOFT),
-	SAPPHIRE("SAPP", "Sapphire", GemstoneGroup.SOFT),
-	JADE("JADE", "Jade", GemstoneGroup.SOFT),
-	AMBER("AMBE", "Amber", GemstoneGroup.SOFT),
-	TOPAZ("TOPA", "Topaz", GemstoneGroup.TOPAZ),
-	JASPER("JASP", "Jasper", GemstoneGroup.JASPER),
-	PERIDOT("PERI", "Peridot", GemstoneGroup.HARD),
-	CITRINE("CITR", "Citrine", GemstoneGroup.HARD),
-	ONYX("ONYX", "Onyx", GemstoneGroup.HARD),
-	AQUAMARINE("AQUA", "Aquamarine", GemstoneGroup.HARD);
+/**
+ * The gemstone a mineshaft is made of, and the break-time class it belongs to.
+ *
+ * [blocksPerVein] is the average vein in the bundled gemstone routes. Small veins mean more walking
+ * between them for the same gems, which costs a fast gem like Ruby the most.
+ */
+enum class GemstoneShaft(private val codePrefix: String, val gemName: String, val group: GemstoneGroup, val blocksPerVein: Double) {
+	RUBY("RUBY", "Ruby", GemstoneGroup.RUBY, 29.1),
+	OPAL("OPAL", "Opal", GemstoneGroup.SOFT, 24.9),
+	AMETHYST("AMET", "Amethyst", GemstoneGroup.SOFT, 24.6),
+	SAPPHIRE("SAPP", "Sapphire", GemstoneGroup.SOFT, 29.5),
+	JADE("JADE", "Jade", GemstoneGroup.SOFT, 48.9),
+	AMBER("AMBE", "Amber", GemstoneGroup.SOFT, 29.3),
+	TOPAZ("TOPA", "Topaz", GemstoneGroup.TOPAZ, 40.2),
+	JASPER("JASP", "Jasper", GemstoneGroup.JASPER, 27.8),
+	PERIDOT("PERI", "Peridot", GemstoneGroup.HARD, 29.5),
+	CITRINE("CITR", "Citrine", GemstoneGroup.HARD, 28.3),
+	ONYX("ONYX", "Onyx", GemstoneGroup.HARD, 27.3),
+	AQUAMARINE("AQUA", "Aquamarine", GemstoneGroup.HARD, 31.1);
 
 	val fineGemId: String get() = "FINE_${gemName.uppercase()}_GEM"
 
@@ -67,8 +73,14 @@ data class MineshaftVerdict(
  * against your own best alternative instead of against a hardcoded number.
  */
 object MineshaftValue {
-	/** How long it takes to loot and leave a shaft we skip. */
+	/**
+	 * How long looting the corpses takes. Skipping a shaft is only that and leaving; mining one starts
+	 * with it too, so it comes off the time the gems are mined in.
+	 */
 	const val SKIP_SECONDS = 30.0
+
+	/** The part of a shaft spent mining gems, once the corpses are looted. */
+	fun miningSeconds(shaftSeconds: Double): Double = maxOf(0.0, shaftSeconds - SKIP_SECONDS)
 
 	/**
 	 * All 17 mineshaft types are equally likely at 1 in 17. Mining a gemstone as the last block
@@ -90,6 +102,9 @@ object MineshaftValue {
 	const val EXTRA_CORPSE_CHANCE = 0.45
 
 	private const val BISECTION_STEPS = 80
+
+	/** How far Greedy's bar moves from leaving the missing crystals out towards counting them in full. */
+	const val GREEDY_CRYSTAL_SHARE = 0.25
 	private const val RATE_CEILING = 1e7
 
 	/** Corpse kinds in a gemstone shaft: half Lapis, a quarter each Umber and Tungsten. */
@@ -119,8 +134,8 @@ object MineshaftValue {
 
 	private data class CacheKey(val generation: Int, val inputs: Inputs)
 
-	@Volatile
-	private var cached: Pair<CacheKey, Double>? = null
+	/** Greedy solves two bars per decision, so a single slot would throw the other one away each time. */
+	private val cached = ConcurrentHashMap<CacheKey, Double>()
 
 	/** Corpses we would loot if we decided against mining, which is what skipping is worth. */
 	fun skipRule(mode: LootMode, crystalsFull: Boolean, openVanguards: Boolean): LootRule =
@@ -156,8 +171,8 @@ object MineshaftValue {
 		val total = corpses.values.sum()
 		// Only a corpse we open gives its Pristine, so Lapis Only gets it from the Lapis ones alone.
 		val looted = corpses.entries.sumOf { (type, count) -> if (mineRule.includes(type)) count else 0 }
-		val mined = shaft *
-			GemstoneIncome.coinsPerSecond(gemstone.group, MiningProfile.inside, finePrice, looted.toDouble())
+		val mined = miningSeconds(shaft) *
+			GemstoneIncome.coinsPerSecond(gemstone.group, MiningProfile.inside, finePrice, looted.toDouble(), gemstone.blocksPerVein)
 		val mineCorpses = corpseValue(corpses, mineRule, priceType, lockedCrystals) ?: return null
 		val skip = corpseValue(corpses, skipRule(mode, crystalsFull, openVanguards), priceType, lockedCrystals) ?: return null
 		val mine = mined + mineCorpses
@@ -165,7 +180,7 @@ object MineshaftValue {
 		return MineshaftVerdict(
 			gemstone = gemstone,
 			price = finePrice,
-			neededPrice = breakEvenPrice(gemstone.group, looted, rate, mineCorpses - skip, shaft),
+			neededPrice = breakEvenPrice(gemstone.group, looted, rate, mineCorpses - skip, shaft, gemstone.blocksPerVein),
 			coinsPerHour = marginal * 3600,
 			targetPerHour = rate * 3600,
 			corpses = total,
@@ -178,17 +193,25 @@ object MineshaftValue {
 	 * already clear it on their own.
 	 *
 	 * Mining income is linear in the Fine price and the corpses do not depend on it at all, so the
-	 * margin is `(shaft * perPrice * price + corpseGain) / (shaft - SKIP)` and setting that equal to
+	 * margin is `((shaft - SKIP) * perPrice * price + corpseGain) / (shaft - SKIP)` and setting that equal to
 	 * [rate] inverts exactly - no search needed.
 	 */
-	fun breakEvenPrice(group: GemstoneGroup, looted: Int, rate: Double, corpseGain: Double, shaftSeconds: Double): Double? {
-		val needed = (rate * (shaftSeconds - SKIP_SECONDS) - corpseGain) / (shaftSeconds * finePerSecond(group, looted))
+	fun breakEvenPrice(
+		group: GemstoneGroup,
+		looted: Int,
+		rate: Double,
+		corpseGain: Double,
+		shaftSeconds: Double,
+		blocksPerVein: Double? = null,
+	): Double? {
+		val needed = (rate * (shaftSeconds - SKIP_SECONDS) - corpseGain) /
+			(miningSeconds(shaftSeconds) * finePerSecond(group, looted, blocksPerVein))
 		return needed.takeIf { it > 0 }
 	}
 
 	/** Fine gems mined per second, which is what makes the margin linear in the Fine price. */
-	fun finePerSecond(group: GemstoneGroup, looted: Int): Double =
-		GemstoneIncome.blocksPerSecond(group, MiningProfile.inside) *
+	fun finePerSecond(group: GemstoneGroup, looted: Int, blocksPerVein: Double? = null): Double =
+		GemstoneIncome.blocksPerSecond(group, MiningProfile.inside, blocksPerVein) *
 			GemstoneIncome.finePerBlock(MiningProfile.inside, looted.toDouble())
 
 	/** Coins the corpses in a shaft are worth under [rule], or null while a price is missing. */
@@ -209,11 +232,16 @@ object MineshaftValue {
 	/**
 	 * The coins per second the leave-and-respawn loop earns, cached per Bazaar refresh.
 	 *
-	 * Greedy is rated as if every crystal is carried, whatever you hold today: it opens every corpse
-	 * while crystals are missing, so counting their crystals as income in every future shaft set a bar
-	 * that even a Jasper shaft could not clear. Normal keeps the crystals you really carry. That bar
-	 * runs high while crystals are missing, which makes Normal skip more and reach the crystal
-	 * mineshafts sooner - simulated, that earned more than the steady-state bar did.
+	 * Greedy sits between two bars that are both wrong, a quarter of the way from one to the other.
+	 * Counting the missing crystals as income in every future shaft assumes they keep dropping
+	 * forever, when they stop once all five are carried - that bar ran so high not even a Jasper
+	 * shaft cleared it. Leaving them out entirely ignores that a skip opens corpses sooner, so it mined
+	 * almost everything and collected slowly. Simulated, every share from 0 to 0.5 earned the same
+	 * coins per hour, about 3% over Normal; a quarter still mines Jasper with no crystals carried and
+	 * collects all five corpse crystals in about four fifths of the time.
+	 *
+	 * Normal keeps the crystals you really carry. That bar runs high while crystals are missing, which
+	 * makes Normal skip more and reach the crystal mineshafts sooner.
 	 */
 	fun longRunRate(
 		priceType: BazaarPriceType,
@@ -222,19 +250,22 @@ object MineshaftValue {
 		openVanguards: Boolean,
 		lockedCrystals: Set<CrystalType>,
 		coldResistance: Double,
-	): Double? = longRunRate(
-		if (mode == LootMode.GREEDY) {
-			Inputs(priceType, mode, crystalsFull = true, openVanguards, CrystalType.entries.toSet(), coldResistance)
-		} else {
-			Inputs(priceType, mode, crystalsFull, openVanguards, lockedCrystals, coldResistance)
-		},
-	)
+	): Double? {
+		val carried = Inputs(priceType, mode, crystalsFull, openVanguards, lockedCrystals, coldResistance)
+		if (mode != LootMode.GREEDY) return longRunRate(carried)
+		val steady = longRunRate(Inputs(priceType, mode, crystalsFull = true, openVanguards, CrystalType.entries.toSet(), coldResistance))
+			?: return null
+		if (crystalsFull) return steady
+		val withCrystals = longRunRate(carried) ?: return null
+		return steady + GREEDY_CRYSTAL_SHARE * (withCrystals - steady)
+	}
 
 	private fun longRunRate(inputs: Inputs): Double? {
 		val key = CacheKey(Bazaar.generation, inputs)
-		cached?.let { (cachedKey, rate) -> if (cachedKey == key) return rate }
+		cached[key]?.let { return it }
 		val solved = solve(inputs) ?: return null
-		cached = key to solved
+		cached.keys.removeIf { it.generation != key.generation }
+		cached[key] = solved
 		return solved
 	}
 
@@ -263,12 +294,13 @@ object MineshaftValue {
 			for ((count, chance) in corpseCountChances) {
 				val weight = share * chance
 				for (shaft in GemstoneShaft.entries) {
-					val mine = shaftSeconds *
+					val mine = miningSeconds(shaftSeconds) *
 						GemstoneIncome.coinsPerSecond(
 							shaft.group,
 							MiningProfile.inside,
 							finePrices.getValue(shaft),
 							count * minedShare,
+							shaft.blocksPerVein,
 						) + count * mixAll
 					val skip = count * mixSkip
 					total += weight * maxOf(mine - rate * shaftSeconds, skip - rate * SKIP_SECONDS)

@@ -56,10 +56,11 @@ object MineshaftValueAlert : Feature {
 			Component.literal("DON'T MINE").withStyle(ChatFormatting.RED, ChatFormatting.BOLD)
 		}
 		val details = Component.literal(reason(verdict)).withStyle(ChatFormatting.GRAY)
+		val sound = if (verdict.shouldMine) TitleSound.MINESHAFT_VERDICT else TitleSound.MINESHAFT_VERDICT_SKIP
 		if (config.verdictTitle) {
-			Titles.show(headline, TitleSound.MINESHAFT_VERDICT, 0, 60, 10, details)
+			Titles.show(headline, sound, 0, 60, 10, details)
 		} else if (config.sendChat) {
-			TitleSounds.play(TitleSound.MINESHAFT_VERDICT)
+			TitleSounds.play(sound)
 		}
 		if (config.sendChat) ChatUtils.send(headline.copy().append(Component.literal(" ")).append(details))
 	}

@@ -24,7 +24,8 @@ enum class TitleSound(val displayName: String, val defaultSound: DefaultSound, v
 	LANTERN_EXPIRED("Lantern Expired", DefaultSound.PLING, true),
 	WRONG_GEAR("Wrong Gear", DefaultSound.VILLAGER_NO, true),
 	MINESHAFT_TYPE("Mineshaft Type", DefaultSound.NONE, false),
-	MINESHAFT_VERDICT("Mineshaft Verdict", DefaultSound.NONE, false),
+	MINESHAFT_VERDICT("Mineshaft Verdict: Mine", DefaultSound.NONE, false),
+	MINESHAFT_VERDICT_SKIP("Mineshaft Verdict: Don't Mine", DefaultSound.NONE, false),
 	BLUE_CHEESE("Blue Cheese", DefaultSound.VILLAGER_NO, true),
 	SHARED_MINESHAFT("Shared Mineshaft", DefaultSound.PLING, true),
 }

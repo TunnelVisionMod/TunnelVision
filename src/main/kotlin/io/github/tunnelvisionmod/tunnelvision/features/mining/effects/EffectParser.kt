@@ -9,6 +9,7 @@ object EffectParser {
 	private val effectsMenuTitle = Regex("""^(?:\(\d+/\d+\) )?Active Effects$""")
 	private val remainingLore = Regex("""^Remaining: ((?:\d+:)*\d+)$""")
 	private val potionLore = Regex("""^(.+) \(((?:\d+:)*\d+)\)$""")
+	private val level = Regex(""" [IVX]+$""")
 
 	fun parseTab(lines: List<String>): List<TabEffect> = lines.mapNotNull { line ->
 		val (name, time) = effectLine.matchEntire(line.trim())?.destructured ?: return@mapNotNull null
@@ -19,8 +20,9 @@ object EffectParser {
 
 	fun isEffectsMenu(title: String): Boolean = effectsMenuTitle.matches(title)
 
+	/** The Fiesta Flask has not been seen in the menu yet, so its name is also accepted with a level. */
 	fun parseMenuItem(name: String, lore: List<String>): TabEffect? {
-		val effect = MiningEffect.entries.firstOrNull { it.tabName == name } ?: return null
+		val effect = MiningEffect.entries.firstOrNull { it.tabName == name || it.tabName == name.replace(level, "") } ?: return null
 		val time = lore.firstNotNullOfOrNull { remainingLore.matchEntire(it)?.groupValues?.get(1) } ?: return null
 		return TabEffect(effect, parseClock(time), 1)
 	}

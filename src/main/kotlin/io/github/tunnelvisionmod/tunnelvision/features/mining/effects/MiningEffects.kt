@@ -124,6 +124,7 @@ object MiningEffects : Feature {
 		val color = when (effect) {
 			MiningEffect.COLD_RESISTANCE -> ChatFormatting.AQUA
 			MiningEffect.FILET_O_FORTUNE -> ChatFormatting.GOLD
+			MiningEffect.FIESTA_FLASK -> ChatFormatting.LIGHT_PURPLE
 		}
 		val time = remaining?.let { Component.literal(formatDuration(it)).withStyle(ChatFormatting.WHITE) }
 			?: Component.literal("open /effects").withStyle(ChatFormatting.GRAY)
@@ -141,6 +142,7 @@ object MiningEffects : Feature {
 		override fun getExampleLines() = listOf(
 			line(MiningEffect.COLD_RESISTANCE, 750_000),
 			line(MiningEffect.FILET_O_FORTUNE, 3_484_000),
+			line(MiningEffect.FIESTA_FLASK, 2_210_000),
 		)
 	}
 }

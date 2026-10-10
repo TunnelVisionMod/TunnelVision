@@ -8,7 +8,7 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigOption
 class MiningEffectsConfig {
 	@Expose
 	@JvmField
-	@ConfigOption(name = "Enabled", desc = "Show a HUD widget with the remaining time of Cold Resistance IV and Filet O' Fortune on mining islands.")
+	@ConfigOption(name = "Enabled", desc = "Show a HUD widget with the remaining time of Cold Resistance IV, Filet O' Fortune and the Fiesta Flask on mining islands.")
 	@ConfigEditorBoolean
 	var enabled = false
 

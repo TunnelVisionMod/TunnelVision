@@ -291,7 +291,7 @@ class MineshaftValueTest {
 		val rate = 65_000_000.0 / 3600
 		val corpseGain = 1_500_000.0
 		val price = MineshaftValue.breakEvenPrice(group, looted = 3, rate = rate, corpseGain = corpseGain, shaftSeconds = SHAFT)!!
-		val income = SHAFT * MineshaftValue.finePerSecond(group, 3) * price
+		val income = MineshaftValue.miningSeconds(SHAFT) * MineshaftValue.finePerSecond(group, 3) * price
 		val margin = (income + corpseGain) / (SHAFT - MineshaftValue.SKIP_SECONDS)
 		assertEquals(rate, margin, 1e-9)
 	}
