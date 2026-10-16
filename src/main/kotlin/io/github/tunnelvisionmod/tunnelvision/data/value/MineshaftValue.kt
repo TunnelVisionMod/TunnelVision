@@ -104,7 +104,7 @@ object MineshaftValue {
 	private const val BISECTION_STEPS = 80
 
 	/** How far Crystal Hunter's bar moves from leaving the missing crystals out towards counting them in full. */
-	const val GREEDY_CRYSTAL_SHARE = 0.25
+	const val CRYSTAL_HUNTER_SHARE = 0.25
 	private const val RATE_CEILING = 1e7
 
 	/** Corpse kinds in a gemstone shaft: half Lapis, a quarter each Umber and Tungsten. */
@@ -252,12 +252,12 @@ object MineshaftValue {
 		coldResistance: Double,
 	): Double? {
 		val carried = Inputs(priceType, mode, crystalsFull, openVanguards, lockedCrystals, coldResistance)
-		if (mode != LootMode.GREEDY) return longRunRate(carried)
+		if (mode != LootMode.CRYSTAL_HUNTER) return longRunRate(carried)
 		val steady = longRunRate(Inputs(priceType, mode, crystalsFull = true, openVanguards, CrystalType.entries.toSet(), coldResistance))
 			?: return null
 		if (crystalsFull) return steady
 		val withCrystals = longRunRate(carried) ?: return null
-		return steady + GREEDY_CRYSTAL_SHARE * (withCrystals - steady)
+		return steady + CRYSTAL_HUNTER_SHARE * (withCrystals - steady)
 	}
 
 	private fun longRunRate(inputs: Inputs): Double? {

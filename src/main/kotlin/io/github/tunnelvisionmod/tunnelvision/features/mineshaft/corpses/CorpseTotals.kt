@@ -37,11 +37,6 @@ class CorpseTotals {
 		corpses[type] = corpses.getOrDefault(type, 0) + 1
 	}
 
-	/** Adds [coins] to a corpse already counted, for a key refund that arrived after it was added. */
-	fun credit(type: CorpseType, coins: Double) {
-		this.coins[type] = this.coins.getOrDefault(type, 0.0) + coins
-	}
-
 	fun reset() {
 		coins.clear()
 		corpses.clear()

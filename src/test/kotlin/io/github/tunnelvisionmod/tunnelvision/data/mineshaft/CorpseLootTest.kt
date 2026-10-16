@@ -16,24 +16,24 @@ class CorpseLootTest {
 	}
 
 	@Test
-	fun `greedy loots everything while crystals are not full`() {
-		assertEquals(LootRule.ALL, CorpseLoot.rule(LootMode.GREEDY, crystalsFull = false, shouldMine = false, openVanguards = true))
-		assertEquals(LootRule.ALL, CorpseLoot.rule(LootMode.GREEDY, crystalsFull = false, shouldMine = null, openVanguards = true))
+	fun `crystal hunter loots everything while crystals are not full`() {
+		assertEquals(LootRule.ALL, CorpseLoot.rule(LootMode.CRYSTAL_HUNTER, crystalsFull = false, shouldMine = false, openVanguards = true))
+		assertEquals(LootRule.ALL, CorpseLoot.rule(LootMode.CRYSTAL_HUNTER, crystalsFull = false, shouldMine = null, openVanguards = true))
 	}
 
 	@Test
-	fun `greedy with crystals full loots everything only in a shaft worth mining`() {
-		assertEquals(LootRule.ALL, CorpseLoot.rule(LootMode.GREEDY, crystalsFull = true, shouldMine = true, openVanguards = true))
-		assertEquals(LootRule.LAPIS_AND_VANGUARD, CorpseLoot.rule(LootMode.GREEDY, crystalsFull = true, shouldMine = false, openVanguards = true))
-		assertEquals(LootRule.LAPIS_AND_VANGUARD, CorpseLoot.rule(LootMode.GREEDY, crystalsFull = true, shouldMine = null, openVanguards = true))
+	fun `crystal hunter with crystals full loots everything only in a shaft worth mining`() {
+		assertEquals(LootRule.ALL, CorpseLoot.rule(LootMode.CRYSTAL_HUNTER, crystalsFull = true, shouldMine = true, openVanguards = true))
+		assertEquals(LootRule.LAPIS_AND_VANGUARD, CorpseLoot.rule(LootMode.CRYSTAL_HUNTER, crystalsFull = true, shouldMine = false, openVanguards = true))
+		assertEquals(LootRule.LAPIS_AND_VANGUARD, CorpseLoot.rule(LootMode.CRYSTAL_HUNTER, crystalsFull = true, shouldMine = null, openVanguards = true))
 	}
 
 	@Test
-	fun `normal loots everything only in a shaft worth mining, crystals or not`() {
+	fun `adaptive loots everything only in a shaft worth mining, crystals or not`() {
 		for (crystalsFull in listOf(false, true)) {
-			assertEquals(LootRule.ALL, CorpseLoot.rule(LootMode.NORMAL, crystalsFull, shouldMine = true, openVanguards = true))
-			assertEquals(LootRule.LAPIS_AND_VANGUARD, CorpseLoot.rule(LootMode.NORMAL, crystalsFull, shouldMine = false, openVanguards = true))
-			assertEquals(LootRule.LAPIS_AND_VANGUARD, CorpseLoot.rule(LootMode.NORMAL, crystalsFull, shouldMine = null, openVanguards = true))
+			assertEquals(LootRule.ALL, CorpseLoot.rule(LootMode.ADAPTIVE, crystalsFull, shouldMine = true, openVanguards = true))
+			assertEquals(LootRule.LAPIS_AND_VANGUARD, CorpseLoot.rule(LootMode.ADAPTIVE, crystalsFull, shouldMine = false, openVanguards = true))
+			assertEquals(LootRule.LAPIS_AND_VANGUARD, CorpseLoot.rule(LootMode.ADAPTIVE, crystalsFull, shouldMine = null, openVanguards = true))
 		}
 	}
 
@@ -83,7 +83,7 @@ class CorpseLootTest {
 
 	@Test
 	fun `not opening vanguards still loots everything else in a shaft worth mining`() {
-		val rule = CorpseLoot.rule(LootMode.NORMAL, crystalsFull = false, shouldMine = true, openVanguards = false)
+		val rule = CorpseLoot.rule(LootMode.ADAPTIVE, crystalsFull = false, shouldMine = true, openVanguards = false)
 		assertEquals(LootRule.ALL_BUT_VANGUARD, rule)
 		for (type in listOf(CorpseType.LAPIS, CorpseType.UMBER, CorpseType.TUNGSTEN)) {
 			assertTrue(rule.includes(type), type.tabName)
@@ -91,10 +91,10 @@ class CorpseLootTest {
 	}
 
 	@Test
-	fun `greedy without vanguards loots everything else`() {
+	fun `crystal hunter without vanguards loots everything else`() {
 		assertEquals(
 			LootRule.ALL_BUT_VANGUARD,
-			CorpseLoot.rule(LootMode.GREEDY, crystalsFull = false, shouldMine = false, openVanguards = false),
+			CorpseLoot.rule(LootMode.CRYSTAL_HUNTER, crystalsFull = false, shouldMine = false, openVanguards = false),
 		)
 	}
 }

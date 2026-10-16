@@ -22,7 +22,7 @@ object CorpseLoot {
 	 */
 	fun rule(mode: LootMode, crystalsFull: Boolean, shouldMine: Boolean?, openVanguards: Boolean): LootRule = when {
 		mode == LootMode.LAPIS_ONLY -> LootRule.LAPIS
-		mode == LootMode.GREEDY && !crystalsFull -> everything(openVanguards)
+		mode == LootMode.CRYSTAL_HUNTER && !crystalsFull -> everything(openVanguards)
 		shouldMine == true -> everything(openVanguards)
 		openVanguards -> LootRule.LAPIS_AND_VANGUARD
 		else -> LootRule.LAPIS
