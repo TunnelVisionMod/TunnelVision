@@ -229,31 +229,31 @@ class MineshaftValueTest {
 	}
 
 	@Test
-	fun `skipping loots lapis unless greedy is still filling crystals`() {
+	fun `skipping loots lapis unless crystal hunter is still filling crystals`() {
 		assertEquals(LootRule.LAPIS, MineshaftValue.skipRule(LootMode.LAPIS_ONLY, crystalsFull = false, openVanguards = true))
-		assertEquals(LootRule.ALL, MineshaftValue.skipRule(LootMode.GREEDY, crystalsFull = false, openVanguards = true))
-		assertEquals(LootRule.LAPIS_AND_VANGUARD, MineshaftValue.skipRule(LootMode.NORMAL, crystalsFull = false, openVanguards = true))
+		assertEquals(LootRule.ALL, MineshaftValue.skipRule(LootMode.CRYSTAL_HUNTER, crystalsFull = false, openVanguards = true))
+		assertEquals(LootRule.LAPIS_AND_VANGUARD, MineshaftValue.skipRule(LootMode.ADAPTIVE, crystalsFull = false, openVanguards = true))
 	}
 
 	/**
-	 * With Vanguards off, Normal collapses onto Lapis Only: the two rules can only ever differ over a
+	 * With Vanguards off, Adaptive collapses onto Lapis Only: the two rules can only ever differ over a
 	 * Vanguard corpse. That is what closes the gap between those two modes, since the Fairy mineshaft
 	 * in the respawn pool holds nothing else.
 	 */
 	@Test
-	fun `without vanguards normal skips exactly what lapis only skips`() {
+	fun `without vanguards adaptive skips exactly what lapis only skips`() {
 		for (crystalsFull in listOf(false, true)) {
 			assertEquals(
 				MineshaftValue.skipRule(LootMode.LAPIS_ONLY, crystalsFull, openVanguards = false),
-				MineshaftValue.skipRule(LootMode.NORMAL, crystalsFull, openVanguards = false),
+				MineshaftValue.skipRule(LootMode.ADAPTIVE, crystalsFull, openVanguards = false),
 			)
 		}
 	}
 
 	@Test
 	fun `mining a shaft never loots a vanguard we do not open`() {
-		assertTrue(MineshaftValue.mineRule(LootMode.NORMAL, crystalsFull = false, openVanguards = true).includes(CorpseType.VANGUARD))
-		assertFalse(MineshaftValue.mineRule(LootMode.NORMAL, crystalsFull = false, openVanguards = false).includes(CorpseType.VANGUARD))
+		assertTrue(MineshaftValue.mineRule(LootMode.ADAPTIVE, crystalsFull = false, openVanguards = true).includes(CorpseType.VANGUARD))
+		assertFalse(MineshaftValue.mineRule(LootMode.ADAPTIVE, crystalsFull = false, openVanguards = false).includes(CorpseType.VANGUARD))
 	}
 
 	/** Lapis Only opens nothing but Lapis, in a shaft worth mining as much as in one we leave. */
@@ -271,8 +271,8 @@ class MineshaftValueTest {
 	}
 
 	@Test
-	fun `greedy still opens everything in a shaft worth mining`() {
-		assertEquals(LootRule.ALL, MineshaftValue.mineRule(LootMode.GREEDY, crystalsFull = false, openVanguards = true))
+	fun `crystal hunter still opens everything in a shaft worth mining`() {
+		assertEquals(LootRule.ALL, MineshaftValue.mineRule(LootMode.CRYSTAL_HUNTER, crystalsFull = false, openVanguards = true))
 	}
 
 	@Test

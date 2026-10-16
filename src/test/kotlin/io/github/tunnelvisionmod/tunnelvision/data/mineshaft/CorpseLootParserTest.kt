@@ -108,4 +108,16 @@ class CorpseLootParserTest {
 		assertNull(CorpseLootParser.item("▬▬▬▬"))
 		assertNull(CorpseLootParser.item("0x Glacite Jewel"))
 	}
+
+	@Test
+	fun `the resourceful perk saving a key is recognised`() {
+		assertTrue(CorpseLootParser.isKeyRefund("LUCKY! Your Resourceful perk saved your key from being consumed!"))
+		assertFalse(CorpseLootParser.isKeyRefund("TUNGSTEN CORPSE LOOT!"))
+		assertFalse(CorpseLootParser.isKeyRefund("Tungsten Key"))
+	}
+
+	@Test
+	fun `the full metallic minis name reads as a drop`() {
+		assertEquals(LootedItem("Dwarven O's Metallic Minis", 1), CorpseLootParser.item("Dwarven O's Metallic Minis"))
+	}
 }

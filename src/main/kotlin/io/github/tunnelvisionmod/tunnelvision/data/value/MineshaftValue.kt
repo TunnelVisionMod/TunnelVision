@@ -103,8 +103,8 @@ object MineshaftValue {
 
 	private const val BISECTION_STEPS = 80
 
-	/** How far Greedy's bar moves from leaving the missing crystals out towards counting them in full. */
-	const val GREEDY_CRYSTAL_SHARE = 0.25
+	/** How far Crystal Hunter's bar moves from leaving the missing crystals out towards counting them in full. */
+	const val CRYSTAL_HUNTER_SHARE = 0.25
 	private const val RATE_CEILING = 1e7
 
 	/** Corpse kinds in a gemstone shaft: half Lapis, a quarter each Umber and Tungsten. */
@@ -134,7 +134,7 @@ object MineshaftValue {
 
 	private data class CacheKey(val generation: Int, val inputs: Inputs)
 
-	/** Greedy solves two bars per decision, so a single slot would throw the other one away each time. */
+	/** Crystal Hunter solves two bars per decision, so a single slot would throw the other one away each time. */
 	private val cached = ConcurrentHashMap<CacheKey, Double>()
 
 	/** Corpses we would loot if we decided against mining, which is what skipping is worth. */
@@ -232,16 +232,16 @@ object MineshaftValue {
 	/**
 	 * The coins per second the leave-and-respawn loop earns, cached per Bazaar refresh.
 	 *
-	 * Greedy sits between two bars that are both wrong, a quarter of the way from one to the other.
+	 * Crystal Hunter sits between two bars that are both wrong, a quarter of the way from one to the other.
 	 * Counting the missing crystals as income in every future shaft assumes they keep dropping
 	 * forever, when they stop once all five are carried - that bar ran so high not even a Jasper
 	 * shaft cleared it. Leaving them out entirely ignores that a skip opens corpses sooner, so it mined
 	 * almost everything and collected slowly. Simulated, every share from 0 to 0.5 earned the same
-	 * coins per hour, about 3% over Normal; a quarter still mines Jasper with no crystals carried and
+	 * coins per hour, about 3% over Adaptive; a quarter still mines Jasper with no crystals carried and
 	 * collects all five corpse crystals in about four fifths of the time.
 	 *
-	 * Normal keeps the crystals you really carry. That bar runs high while crystals are missing, which
-	 * makes Normal skip more and reach the crystal mineshafts sooner.
+	 * Adaptive keeps the crystals you really carry. That bar runs high while crystals are missing, which
+	 * makes Adaptive skip more and reach the crystal mineshafts sooner.
 	 */
 	fun longRunRate(
 		priceType: BazaarPriceType,
@@ -252,12 +252,12 @@ object MineshaftValue {
 		coldResistance: Double,
 	): Double? {
 		val carried = Inputs(priceType, mode, crystalsFull, openVanguards, lockedCrystals, coldResistance)
-		if (mode != LootMode.GREEDY) return longRunRate(carried)
+		if (mode != LootMode.CRYSTAL_HUNTER) return longRunRate(carried)
 		val steady = longRunRate(Inputs(priceType, mode, crystalsFull = true, openVanguards, CrystalType.entries.toSet(), coldResistance))
 			?: return null
 		if (crystalsFull) return steady
 		val withCrystals = longRunRate(carried) ?: return null
-		return steady + GREEDY_CRYSTAL_SHARE * (withCrystals - steady)
+		return steady + CRYSTAL_HUNTER_SHARE * (withCrystals - steady)
 	}
 
 	private fun longRunRate(inputs: Inputs): Double? {

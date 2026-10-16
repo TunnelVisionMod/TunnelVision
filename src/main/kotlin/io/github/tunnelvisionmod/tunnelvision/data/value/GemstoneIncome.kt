@@ -38,7 +38,7 @@ object GemstoneIncome {
 
 	/**
 	 * Seconds lost between two veins in a mineshaft: walking, aiming and digging through to the next
-	 * one. At 2.5 s Normal mode lands on the Mining Cult rules of thumb - Ruby from 4 corpses, the
+	 * one. At 2.5 s Adaptive mode lands on the Mining Cult rules of thumb - Ruby from 4 corpses, the
 	 * breaking power 7 gems from 3, Jasper always. How far into the bundled routes a 138 Cold
 	 * Resistance shaft gets pointed at 3.5-6.4 s, but that also holds what the model leaves out.
 	 */

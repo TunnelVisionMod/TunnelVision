@@ -64,6 +64,11 @@ import net.minecraft.network.chat.Style
  * If no line in a block reads as an item, a replaced block is printed back unchanged and nothing is
  * recorded. That is the safety net for the block being reworded: a loot message we cannot price is
  * still worth seeing, and swallowing one would lose the only record of what the corpse paid.
+ *
+ * The Resourceful perk sometimes keeps the key a corpse would have used up, and says so in a line of
+ * its own. The server sends that line just before the loot block of the corpse it belongs to, so it
+ * is held for the next keyed corpse to open and becomes a refund row in its block. If none opens
+ * shortly after, the line is put back in chat untouched.
  */
 object CorpseTracker : Feature {
 	/**
@@ -80,6 +85,9 @@ object CorpseTracker : Feature {
 
 	private const val INDENT = " "
 
+	/** How long a Resourceful line waits for its corpse before it is put back in chat. */
+	private const val REFUND_WINDOW_TICKS = 20
+
 	private val config get() = ConfigManager.config.mineshaft.corpses.corpseTracker
 	private val priceType get() = ConfigManager.config.general.bazaarPrice
 
@@ -93,7 +101,20 @@ object CorpseTracker : Feature {
 
 		/** The rules the server drew around the block, reused so ours is framed the same way. */
 		val rules = mutableListOf<Component>()
+
+		/** The Resourceful perk saved this corpse's key. */
+		var refunded = false
 	}
+
+	/**
+	 * A Resourceful line no corpse has claimed yet. [hidden] says we took it off screen, so it is put
+	 * back if nothing claims it.
+	 */
+	private class PendingRefund(val message: Component, val hidden: Boolean) {
+		var ticks = 0
+	}
+
+	private var pendingRefund: PendingRefund? = null
 
 	private var open: Block? = null
 	private val ready = mutableListOf<Block>()
@@ -161,11 +182,23 @@ object CorpseTracker : Feature {
 		if (!SkyBlock.isInMineshaft) return
 		val text = event.text.trim()
 
+		if (CorpseLootParser.isKeyRefund(text)) {
+			onKeyRefund(event)
+			return
+		}
+
 		CorpseLootParser.corpseType(text)?.let { type ->
 			open?.let { ready += it }
 			// Whether to hide the block is decided once here, so toggling the setting mid-block
 			// cannot leave half of it hidden.
 			val block = Block(type, suppressed = config.replaceChat)
+			// A Lapis corpse takes no key, so a waiting refund belongs to the next keyed corpse.
+			if (type.keyName != null) pendingRefund?.let { pending ->
+				block.refunded = true
+				// Kept with the block, so a block we cannot read is put back with its Resourceful line.
+				if (pending.hidden) block.original += pending.message
+				pendingRefund = null
+			}
 			open = block
 			swallow(block, event)
 			return
@@ -203,6 +236,25 @@ object CorpseTracker : Feature {
 		swallow(block, event)
 	}
 
+	/**
+	 * Holds the Resourceful line for the next keyed corpse. It is hidden whenever the loot message is
+	 * replaced, because ours shows it as a row.
+	 */
+	private fun onKeyRefund(event: ChatReceivedEvent) {
+		releaseRefund()
+		val hide = config.replaceChat
+		pendingRefund = PendingRefund(event.message, hide)
+		if (hide) event.cancel()
+	}
+
+	/** Puts an unclaimed Resourceful line back in chat, if we hid it. */
+	private fun releaseRefund() {
+		val pending = pendingRefund ?: return
+		pendingRefund = null
+		Debug.log { "CorpseTracker: a Resourceful refund matched no corpse, leaving it in chat" }
+		if (pending.hidden) ChatUtils.sendRaw(pending.message)
+	}
+
 	/** Buffers the line, and hides it when this block is being replaced. */
 	private fun swallow(block: Block, event: ChatReceivedEvent) {
 		block.original += event.message
@@ -235,6 +287,7 @@ object CorpseTracker : Feature {
 				open = null
 			}
 		}
+		pendingRefund?.let { if (++it.ticks > REFUND_WINDOW_TICKS) releaseRefund() }
 		if (ready.isEmpty()) return
 		val blocks = ready.toList()
 		ready.clear()
@@ -301,6 +354,7 @@ object CorpseTracker : Feature {
 	private fun onLocationChanged(event: LocationChangedEvent) {
 		open = null
 		ready.clear()
+		releaseRefund()
 		if (location.isNewLocation(event)) remindOnEntry = true
 	}
 
@@ -327,6 +381,7 @@ object CorpseTracker : Feature {
 			priceType,
 			includeMeter = config.showMeter,
 			meterPayout = meterPayout,
+			keyRefunded = block.refunded,
 		)
 		Debug.log { "CorpseTracker: ${block.type} netted ${breakdown.net}, ${breakdown.unpriced} of ${block.items.size} drops unpriced" }
 		breakdown.net?.let { totals.add(block.type, it) }
@@ -397,6 +452,7 @@ object CorpseTracker : Feature {
 			rows += Component.literal(INDENT + key).withStyle(ChatFormatting.RED) to
 				Component.literal(if (cost == null) "?" else "-" + formatCoins(cost)).withStyle(ChatFormatting.RED)
 		}
+		if (breakdown.keyRefunded) rows += refundRow(breakdown.type, breakdown.refundCoins)
 
 		val lines = mutableListOf<Component>()
 		lines += centred(header(breakdown.type), width)
@@ -407,6 +463,12 @@ object CorpseTracker : Feature {
 		lines += rule
 		return lines
 	}
+
+	/** `Skeleton Key (Resourceful)  +36M`: the key the perk handed back, worth what it cost. */
+	private fun refundRow(type: CorpseType, coins: Double?): Pair<Component, Component> =
+		Component.literal(INDENT + (type.keyName ?: "Key") + " ").withStyle(ChatFormatting.GREEN)
+			.append(Component.literal("(Resourceful)").withStyle(ChatFormatting.DARK_GRAY)) to
+			Component.literal(if (coins == null) "?" else "+" + formatCoins(coins)).withStyle(ChatFormatting.GREEN)
 
 	private fun header(type: CorpseType): Component =
 		Component.literal(type.tabName.uppercase() + " ").withStyle(type.color, ChatFormatting.BOLD)
