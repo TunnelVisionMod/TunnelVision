@@ -236,7 +236,7 @@ class MineshaftValueTest {
 	}
 
 	/**
-	 * With Vanguards off, Normal collapses onto Lapis Only: the two rules can only ever differ over a
+	 * With Vanguards off, Adaptive collapses onto Lapis Only: the two rules can only ever differ over a
 	 * Vanguard corpse. That is what closes the gap between those two modes, since the Fairy mineshaft
 	 * in the respawn pool holds nothing else.
 	 */

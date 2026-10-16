@@ -43,7 +43,7 @@ object MineshaftTodoState {
 	val done: Boolean get() = current?.done == true
 
 	/**
-	 * Your crystals are unknown until /hotm has been opened, and here that changes the list: Greedy
+	 * Your crystals are unknown until /hotm has been opened, and here that changes the list: Crystal Hunter
 	 * loots by whether your crystals are full, and a crystal shaft has a crystal to grab.
 	 */
 	val needsHotm: Boolean get() = !CrystalState.known && (loot.lootMode == LootMode.GREEDY || crystalShaft() != null)

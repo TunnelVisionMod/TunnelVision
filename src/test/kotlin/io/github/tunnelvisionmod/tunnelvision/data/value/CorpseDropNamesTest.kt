@@ -108,4 +108,12 @@ class CorpseDropNamesTest {
 	fun `an unknown item has no name`() {
 		assertNull(CorpseDropNames.itemFor("Some Item Hypixel Added Today"))
 	}
+
+	@Test
+	fun `metallic minis are found under the name the message prints`() {
+		val minis = CorpseDropItem.Bazaar("DWARVEN_OS_METALLIC_MINIS")
+		assertEquals(minis, CorpseDropNames.itemFor("Dwarven O's Metallic Minis"))
+		assertEquals(minis, CorpseDropNames.itemFor("Dwarven O’s Metallic Minis"))
+		assertEquals(minis, CorpseDropNames.itemFor("Metallic Minis"))
+	}
 }

@@ -148,4 +148,32 @@ class CorpseProfitTest {
 		)
 		assertEquals(listOf("Suspicious Scrap", "Caged Wisp", "Glacite Jewel"), breakdown.lines.map { it.item.name })
 	}
+
+	@Test
+	fun `a refunded key is handed back in full`() {
+		val breakdown = CorpseProfitBreakdown(CorpseType.VANGUARD, emptyList(), 1_000_000.0, 5_000_000.0, 36_000_000.0, keyRefunded = true)
+		assertEquals(36_000_000.0, breakdown.refundCoins)
+		assertEquals(6_000_000.0, breakdown.net)
+	}
+
+	@Test
+	fun `a key that was not refunded still costs its price`() {
+		val breakdown = CorpseProfitBreakdown(CorpseType.VANGUARD, emptyList(), 1_000_000.0, 5_000_000.0, 36_000_000.0)
+		assertEquals(0.0, breakdown.refundCoins)
+		assertEquals(-30_000_000.0, breakdown.net)
+	}
+
+	@Test
+	fun `a refund cannot make up for a key price we do not know`() {
+		val breakdown = CorpseProfit.of(CorpseType.TUNGSTEN, emptyList(), BazaarPriceType.SELL_OFFER, keyRefunded = true)
+		assertTrue(breakdown.keyRefunded)
+		assertNull(breakdown.net)
+	}
+
+	@Test
+	fun `a lapis corpse has no key to refund`() {
+		val breakdown = CorpseProfit.of(CorpseType.LAPIS, emptyList(), BazaarPriceType.SELL_OFFER, keyRefunded = true)
+		assertFalse(breakdown.keyRefunded)
+		assertEquals(100_000.0, breakdown.net)
+	}
 }

@@ -65,6 +65,12 @@ object CorpseLootParser {
 	private val countFirst = Regex("""^(\d[\d,]*)\s*[x×]\s*(.+)$""", RegexOption.IGNORE_CASE)
 	private val countLast = Regex("""^(.+?)\s*[x×]\s*(\d[\d,]*)$""", RegexOption.IGNORE_CASE)
 
+	/** `LUCKY! Your Resourceful perk saved your key from being consumed!`, read loosely. */
+	private val resourceful = Regex("""Resourceful perk saved your key""", RegexOption.IGNORE_CASE)
+
+	/** True for the line saying the Resourceful perk kept the key this corpse would have used up. */
+	fun isKeyRefund(line: String): Boolean = resourceful.containsMatchIn(line)
+
 	/** The corpse a loot block belongs to, or null when the line is not a loot header. */
 	fun corpseType(line: String): CorpseType? {
 		val code = header.find(line.trim())?.groupValues?.get(1) ?: return null

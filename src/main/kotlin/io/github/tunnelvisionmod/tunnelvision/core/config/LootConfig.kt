@@ -9,7 +9,7 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigOption
 class LootConfig {
 	@Expose
 	@JvmField
-	@ConfigOption(name = "Loot Mode", desc = "§eLapis Only§7: only Lapis corpses. §eNormal§7: all corpses in a shaft worth mining, otherwise Lapis + Vanguard. §eGreedy§7: all corpses until you carry every crystal a corpse can drop, then like Normal. Vanguards are skipped throughout unless §eOpen Vanguard Corpses §7is on.")
+	@ConfigOption(name = "Loot Mode", desc = "§eLapis Only§7: only Lapis corpses. §eAdaptive§7: Lapis and Vanguard always, Umber and Tungsten only in a shaft worth mining. §eCrystal Hunter§7: Umber and Tungsten always, until you carry every crystal a corpse can drop, then like Adaptive. Vanguards are skipped throughout unless §eOpen Vanguard Corpses §7is on.")
 	@ConfigEditorDropdown
 	var lootMode = LootMode.LAPIS_ONLY
 
@@ -17,7 +17,7 @@ class LootConfig {
 	@JvmField
 	@ConfigOption(
 		name = "Open Vanguard Corpses",
-		desc = "Whether you buy Skeleton Keys to open Vanguard corpses. They are still only opened while one pays for its key at current prices. Off makes them worth nothing in every loot mode, Greedy included, and a Fairy mineshaft worthless.",
+		desc = "Whether you buy Skeleton Keys to open Vanguard corpses. They are still only opened while one pays for its key at current prices. Off makes them worth nothing in every loot mode, Crystal Hunter included, and a Fairy mineshaft worthless.",
 	)
 	@ConfigEditorBoolean
 	var openVanguards = true

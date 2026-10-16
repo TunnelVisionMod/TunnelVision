@@ -57,6 +57,8 @@ object CorpseDropNames {
 				// A corpse only ever drops the one book, and the message just says "Enchanted Book".
 				"Enchanted Book" to bazaar("ENCHANTMENT_ICE_COLD_1"),
 				"Ice Cold 1" to bazaar("ENCHANTMENT_ICE_COLD_1"),
+				// The message prints the full name; the short one is kept in case it is ever abbreviated.
+				"Dwarven O's Metallic Minis" to bazaar("DWARVEN_OS_METALLIC_MINIS"),
 				"Metallic Minis" to bazaar("DWARVEN_OS_METALLIC_MINIS"),
 				// The only armour a corpse drops. It is nothing to do with the set the corpse wears -
 				// that is only how the corpse is recognised - so no other piece belongs here.
@@ -83,6 +85,10 @@ object CorpseDropNames {
 	/** [fallback] is only read until the auction feed loads, so it is the BIN at the time of writing. */
 	private fun auction(itemId: String, fallback: Double): CorpseDropItem = CorpseDropItem.Auction(itemId, fallback)
 
-	/** Names are compared case-insensitively with runs of whitespace collapsed. */
-	private fun key(name: String): String = name.trim().lowercase().replace(Regex("""\s+"""), " ")
+	/**
+	 * Names are compared case-insensitively with runs of whitespace collapsed, and with a curly
+	 * apostrophe read as a straight one, so `Dwarven O’s` and `Dwarven O's` are the same item.
+	 */
+	private fun key(name: String): String =
+		name.trim().lowercase().replace('’', '\'').replace('‘', '\'').replace(Regex("""\s+"""), " ")
 }

@@ -28,6 +28,9 @@ data class ProfitLine(val item: LootedItem, val drop: CorpseDropItem?, val price
  * than its Skeleton Key - calling that a profit would be wrong by tens of millions, so the corpse
  * goes unrecorded until the Bazaar answers. [unpriced] only ever understates the loot, so it is
  * reported alongside the total instead of withholding it.
+ *
+ * [keyRefunded] is the Resourceful perk keeping the key: it is still listed as spent, and handed
+ * back on a line of its own, so the message shows both what the corpse cost and why it did not.
  */
 data class CorpseProfitBreakdown(
 	val type: CorpseType,
@@ -35,8 +38,12 @@ data class CorpseProfitBreakdown(
 	val lootCoins: Double,
 	val meterCoins: Double,
 	val keyCoins: Double?,
+	val keyRefunded: Boolean = false,
 ) {
-	val net: Double? get() = keyCoins?.let { lootCoins + meterCoins - it }
+	/** What the refunded key is worth, or 0 when there was no refund or no key to refund. */
+	val refundCoins: Double? get() = if (keyRefunded) keyCoins else 0.0
+
+	val net: Double? get() = keyCoins?.let { key -> lootCoins + meterCoins - key + (refundCoins ?: 0.0) }
 
 	/** Drops we had no price for, which the message flags so a silent gap cannot look like a total. */
 	val unpriced: Int get() = lines.count { it.price is LootPrice.Unknown }
@@ -64,6 +71,8 @@ object CorpseProfit {
 	 * counting the item as well would pay for it twice. The caller decides this, because only it
 	 * knows how far along the meter was - a Shattered Locket can also drop on its own, about as
 	 * often as the meter fills, so the item alone says nothing about where it came from.
+	 *
+	 * [keyRefunded] says the Resourceful perk saved the key, which the caller reads off chat.
 	 */
 	fun of(
 		type: CorpseType,
@@ -71,6 +80,7 @@ object CorpseProfit {
 		priceType: BazaarPriceType,
 		includeMeter: Boolean = true,
 		meterPayout: Boolean = false,
+		keyRefunded: Boolean = false,
 	): CorpseProfitBreakdown {
 		// Powder is left out entirely rather than listed at zero: it only buys HotM upgrades, so a
 		// line for it is noise in a message about coins.
@@ -81,6 +91,8 @@ object CorpseProfit {
 			lootCoins = lines.filterNot { it.fromMeter }.sumOf { (it.price as? LootPrice.Coins)?.total ?: 0.0 },
 			meterCoins = if (includeMeter) CorpseValue.meterValue(type) else 0.0,
 			keyCoins = CorpseValue.keyCost(type),
+			// A Lapis corpse takes no key, so there is nothing for the perk to save.
+			keyRefunded = keyRefunded && type.keyName != null,
 		)
 	}
 
