@@ -17,7 +17,7 @@ permissions:
 
 env:
   PROJECT: tunnelvision-isingularity
-  MINECRAFT_VERSIONS: 26.1.2 26.2
+  MINECRAFT_VERSIONS: 26.2 26.3
   USER_AGENT: TunnelVisionMod/TunnelVision (github.com/TunnelVisionMod/TunnelVision)
 
 jobs:

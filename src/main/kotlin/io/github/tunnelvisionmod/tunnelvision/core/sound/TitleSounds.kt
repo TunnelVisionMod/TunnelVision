@@ -13,9 +13,6 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.network.chat.Component
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
-import net.minecraft.util.Util
-import org.lwjgl.system.MemoryStack
-import org.lwjgl.util.tinyfd.TinyFileDialogs
 
 /**
  * The sound every alert plays, set per [TitleSound] in the Title Sounds menu and kept in
@@ -68,19 +65,17 @@ object TitleSounds {
 
 	/**
 	 * Opens the system file picker for an .ogg file and, once one is picked, copies it into the
-	 * sounds folder and sets it for [sound]. The picker blocks until closed, so it runs off the
-	 * render thread and [onDone] is called back on it.
+	 * sounds folder and sets it for [sound]. [onDone] is called back on the render thread.
 	 */
 	fun choose(sound: TitleSound, onDone: (Component) -> Unit) {
-		Thread({
-			val picked = pickFile()
+		Compat.pickFile("Choose a sound (.ogg)", SoundFiles.EXTENSION, "OGG sound") { picked ->
 			mc.execute { onDone(picked?.let { assign(sound, it) } ?: return@execute) }
-		}, "TunnelVision sound picker").apply { isDaemon = true }.start()
+		}
 	}
 
 	fun openFolder() {
 		Files.createDirectories(folder)
-		Util.getPlatform().openPath(folder)
+		Compat.openPath(folder)
 	}
 
 	private fun assign(sound: TitleSound, source: Path): Component {
@@ -101,13 +96,6 @@ object TitleSounds {
 		save()
 		test(sound)
 		return Component.literal("${sound.displayName} now plays $name").withStyle(ChatFormatting.GREEN)
-	}
-
-	private fun pickFile(): Path? = MemoryStack.stackPush().use { stack ->
-		val filters = stack.mallocPointer(1)
-		filters.put(stack.UTF8("*.${SoundFiles.EXTENSION}"))
-		filters.flip()
-		TinyFileDialogs.tinyfd_openFileDialog("Choose a sound (.ogg)", null, filters, "OGG sound", false)?.let { Path.of(it) }
 	}
 
 	private fun warnOnce(file: String) {

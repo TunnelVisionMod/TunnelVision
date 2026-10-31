@@ -1,17 +1,16 @@
 package io.github.tunnelvisionmod.tunnelvision.utils.render
 
-import com.mojang.blaze3d.pipeline.BlendFunction
-import com.mojang.blaze3d.pipeline.ColorTargetState
-import com.mojang.blaze3d.pipeline.DepthStencilState
-import com.mojang.blaze3d.pipeline.RenderPipeline
-import com.mojang.blaze3d.platform.CompareOp
 import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.VertexConsumer
-import com.mojang.blaze3d.vertex.VertexFormat
 import io.github.tunnelvisionmod.tunnelvision.TunnelVision
 import io.github.tunnelvisionmod.tunnelvision.TunnelVision.mc
+import io.github.tunnelvisionmod.tunnelvision.compat.BlendFunction
+import io.github.tunnelvisionmod.tunnelvision.compat.ColorTargetState
 import io.github.tunnelvisionmod.tunnelvision.compat.Compat
+import io.github.tunnelvisionmod.tunnelvision.compat.CompareOp
+import io.github.tunnelvisionmod.tunnelvision.compat.DepthStencilState
+import io.github.tunnelvisionmod.tunnelvision.compat.RenderPipeline
 import kotlin.math.max
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext
 import net.minecraft.client.gui.Font
@@ -129,7 +128,7 @@ object WorldRender {
 		val poseStack = context.poseStack()
 		poseStack.pushPose()
 		poseStack.translate(pos.x - cameraPos.x, pos.y - cameraPos.y, pos.z - cameraPos.z)
-		poseStack.mulPose(Compat.camera.rotation())
+		poseStack.last().rotate(Compat.camera.rotation())
 		poseStack.scale(scale, -scale, scale)
 		val chars = text.visualOrderText
 		context.submitNodeCollector().submitText(

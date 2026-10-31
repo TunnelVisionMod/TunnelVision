@@ -36,22 +36,22 @@ jobs:
 
       - run: chmod +x ./gradlew
 
-      - run: ./gradlew build -Pmod_version="$VERSION" -Pmc=26.1.2
-
       - run: ./gradlew build -Pmod_version="$VERSION" -Pmc=26.2
+
+      - run: ./gradlew build -Pmod_version="$VERSION" -Pmc=26.3
 
       - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           name: TunnelVision ${{ env.VERSION }}
           files: |
-            build/libs/TunnelVision-v${{ env.VERSION }}-26.1.2.jar
             build/libs/TunnelVision-v${{ env.VERSION }}-26.2.jar
+            build/libs/TunnelVision-v${{ env.VERSION }}-26.3.jar
           body: |
             ## Requirements
 
-            Download the jar for your Minecraft version (`-26.1.2` or `-26.2`) and put these in your `mods` folder next to it:
+            Download the jar for your Minecraft version (`-26.2` or `-26.3`) and put these in your `mods` folder next to it:
 
-            - Minecraft 26.1.2 or 26.2 with [Fabric Loader](https://fabricmc.net/use/) 0.19.5+
+            - Minecraft 26.2 or 26.3 with [Fabric Loader](https://fabricmc.net/use/) 0.19.5+
             - [Fabric API](https://modrinth.com/mod/fabric-api)
             - [Fabric Language Kotlin](https://modrinth.com/mod/fabric-language-kotlin)
             - [Hypixel Mod API](https://modrinth.com/mod/hypixel-mod-api)

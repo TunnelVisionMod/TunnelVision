@@ -10,7 +10,7 @@ import java.net.http.HttpResponse
 //   ./gradlew release "-Pv=1.4.0"       checks, tags, pushes, waits for CI and publishes
 
 def REPO = "TunnelVisionMod/TunnelVision"
-def MINECRAFT_VERSIONS = ["26.1.2", "26.2"]
+def MINECRAFT_VERSIONS = ["26.2", "26.3"]
 
 def run = { List command, boolean allowFailure = false ->
 	// Groovy's "v$x" strings are not java.lang.String, which ProcessBuilder insists on.

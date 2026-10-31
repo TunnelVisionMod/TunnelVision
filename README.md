@@ -11,7 +11,7 @@
 
 ## What it does
 
-TunnelVision is a Fabric mod for Minecraft 26.1.2 and 26.2 that adds mining features to Hypixel SkyBlock, with a focus on Glacite Mineshafts. With TunnelVision you get:
+TunnelVision is a Fabric mod for Minecraft 26.2 and 26.3 that adds mining features to Hypixel SkyBlock, with a focus on Glacite Mineshafts. With TunnelVision you get:
 
 - **Mineshaft Info:** See the mineshaft type, its corpses and whether the gemstones are worth mining as soon as you enter.
 - **Waypoints:** Find every corpse spot and the fossil.

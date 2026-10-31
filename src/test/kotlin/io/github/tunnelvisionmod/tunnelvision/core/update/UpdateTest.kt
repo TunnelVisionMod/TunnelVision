@@ -29,7 +29,7 @@ class UpdateTest {
 		]}
 	""".trimIndent()
 
-	private val both = listOf("TunnelVision-v1.4.0-26.1.2.jar", "TunnelVision-v1.4.0-26.2.jar")
+	private val both = listOf("TunnelVision-v1.4.0-26.3.jar", "TunnelVision-v1.4.0-26.2.jar")
 
 	@Test
 	fun `links the release page when it has a jar for this minecraft version`() {
@@ -41,7 +41,7 @@ class UpdateTest {
 
 	@Test
 	fun `a release without a jar for this minecraft version is ignored`() {
-		assertNull(UpdateChecker.parseLatest(release("v1.4.0", listOf("TunnelVision-v1.4.0-26.1.2.jar")), "26.2"))
+		assertNull(UpdateChecker.parseLatest(release("v1.4.0", listOf("TunnelVision-v1.4.0-26.3.jar")), "26.2"))
 	}
 
 	@Test

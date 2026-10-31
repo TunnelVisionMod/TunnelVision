@@ -30,14 +30,14 @@ body:
     id: mc-version
     attributes:
       label: Minecraft version
-      placeholder: "26.1.2"
+      placeholder: "26.3"
     validations:
       required: true
   - type: input
     id: loader-version
     attributes:
       label: Fabric Loader / Fabric API version
-      placeholder: "0.19.5 / 0.155.3+26.1.2"
+      placeholder: "0.19.5 / 0.165.0+26.3"
   - type: textarea
     id: mods
     attributes:

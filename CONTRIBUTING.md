@@ -4,7 +4,7 @@
 
 1. Install JDK 25 (e.g. [Temurin](https://adoptium.net/)).
 2. Clone the repo and open it in IntelliJ IDEA. Set the Gradle JVM to JDK 25 (Settings → Build Tools → Gradle).
-3. Run `./gradlew runClient` to start Minecraft with the mod. It builds for 26.1.2 by default; add `-Pmc=26.2` for 26.2. Calls that differ between the versions go through `Compat` in `src/compat/<version>/`.
+3. Run `./gradlew runClient` to start Minecraft with the mod. It builds for 26.3 by default; add `-Pmc=26.2` for 26.2. Calls that differ between the versions go through `Compat` in `src/compat/<version>/`.
 
 ## Workflow
 
