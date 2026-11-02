@@ -50,6 +50,17 @@ class CrystalTrackerTest {
 	}
 
 	@Test
+	fun `missing crystals that forge at a loss are not worth having`() {
+		val tracker = CrystalTracker()
+		val missing = CrystalType.CORPSE_DROPS.first()
+		for (crystal in CrystalType.CORPSE_DROPS - missing) tracker.gained(crystal)
+		assertTrue(tracker.hasCorpseCrystalsWorthHaving { if (it == missing) -1_800_000.0 else 3_000_000.0 })
+		assertTrue(tracker.hasCorpseCrystalsWorthHaving { if (it == missing) 0.0 else 3_000_000.0 })
+		assertFalse(tracker.hasCorpseCrystalsWorthHaving { 500_000.0 })
+		assertFalse(tracker.hasCorpseCrystalsWorthHaving { null })
+	}
+
+	@Test
 	fun `reset clears everything`() {
 		val tracker = CrystalTracker()
 		tracker.gained(CrystalType.JASPER)
