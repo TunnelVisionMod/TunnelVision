@@ -90,11 +90,14 @@ object CorpseValue {
 	private fun CorpseDropItem.isLocked(lockedCrystals: Set<CrystalType>): Boolean =
 		this is CorpseDropItem.Crystal && crystal in lockedCrystals
 
-	/** Coins one [item] is worth, or null while a price it needs is missing. Also prices real drops. */
+	/**
+	 * Coins one [item] is worth, or null while a price it needs is missing. Also prices real drops.
+	 * A crystal that forges at a loss is simply never forged, so it is worth nothing rather than less.
+	 */
 	fun itemValue(item: CorpseDropItem, priceType: BazaarPriceType): Double? = when (item) {
 		is CorpseDropItem.Auction -> Bazaar.lowestBin(item.itemId) ?: item.fallback
 		is CorpseDropItem.Bazaar -> Bazaar.price(item.productId)?.let { priceType.of(it) }
-		is CorpseDropItem.Crystal -> CrystalValue.of(item.crystal)
+		is CorpseDropItem.Crystal -> CrystalValue.of(item.crystal)?.coerceAtLeast(0.0)
 	}
 }
 
