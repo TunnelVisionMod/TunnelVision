@@ -103,15 +103,10 @@ object MineshaftValue {
 
 	private const val BISECTION_STEPS = 80
 
-	/** How far Crystal Hunter's bar moves from leaving the missing crystals out towards counting them in full. */
-	const val CRYSTAL_HUNTER_SHARE = 0.25
 	private const val RATE_CEILING = 1e7
 
 	/** Corpse kinds in a gemstone shaft: half Lapis, a quarter each Umber and Tungsten. */
 	private val GEMSTONE_MIX = mapOf(CorpseType.LAPIS to 0.5, CorpseType.UMBER to 0.25, CorpseType.TUNGSTEN to 0.25)
-
-	/** A Fairy shaft always holds Vanguard corpses, which no other shaft does. */
-	private val FAIRY_MIX = mapOf(CorpseType.VANGUARD to 1.0)
 
 	/** How likely a shaft is to hold 1, 2, 3 or 4 corpses. */
 	val corpseCountChances: Map<Int, Double> = buildMap {
@@ -126,7 +121,6 @@ object MineshaftValue {
 		val priceType: BazaarPriceType,
 		val mode: LootMode,
 		val crystalsFull: Boolean,
-		val openVanguards: Boolean,
 		val lockedCrystals: Set<CrystalType>,
 		val coldResistance: Double,
 		val meterBonus: Int = CorpseValue.meterBonusPercent(),
@@ -158,23 +152,23 @@ object MineshaftValue {
 		priceType: BazaarPriceType,
 		mode: LootMode,
 		crystalsFull: Boolean,
-		openVanguards: Boolean,
+		crystalHuntingShare: Double,
 		lockedCrystals: Set<CrystalType>,
 		coldResistance: Double,
 		loopColdResistance: Double,
 	): MineshaftVerdict? {
 		val gemstone = GemstoneShaft.of(type) ?: return null
 		val finePrice = Bazaar.price(gemstone.fineGemId)?.let { priceType.of(it) } ?: return null
-		val rate = longRunRate(priceType, mode, crystalsFull, openVanguards, lockedCrystals, loopColdResistance) ?: return null
+		val rate = longRunRate(priceType, mode, crystalsFull, crystalHuntingShare, lockedCrystals, loopColdResistance) ?: return null
 		val shaft = ShaftTime.secondsToFreeze(coldResistance)
-		val mineRule = mineRule(mode, crystalsFull, openVanguards)
+		val mineRule = mineRule(mode, crystalsFull, openVanguards = false)
 		val total = corpses.values.sum()
 		// Only a corpse we open gives its Pristine, so Lapis Only gets it from the Lapis ones alone.
 		val looted = corpses.entries.sumOf { (type, count) -> if (mineRule.includes(type)) count else 0 }
 		val mined = miningSeconds(shaft) *
 			GemstoneIncome.coinsPerSecond(gemstone.group, MiningProfile.inside, finePrice, looted.toDouble(), gemstone.blocksPerVein)
 		val mineCorpses = corpseValue(corpses, mineRule, priceType, lockedCrystals) ?: return null
-		val skip = corpseValue(corpses, skipRule(mode, crystalsFull, openVanguards), priceType, lockedCrystals) ?: return null
+		val skip = corpseValue(corpses, skipRule(mode, crystalsFull, openVanguards = false), priceType, lockedCrystals) ?: return null
 		val mine = mined + mineCorpses
 		val marginal = (mine - skip) / (shaft - SKIP_SECONDS)
 		return MineshaftVerdict(
@@ -232,12 +226,15 @@ object MineshaftValue {
 	/**
 	 * The coins per second the leave-and-respawn loop earns, cached per Bazaar refresh.
 	 *
-	 * Crystal Hunter sits between two bars that are both wrong, a quarter of the way from one to the other.
+	 * Vanguards never count, even when you open them: Skeleton Key prices swing them in and out of
+	 * profit, and that should not flip verdicts mid-session.
+	 *
+	 * Crystal Hunter sits between two bars that are both wrong, [crystalHuntingShare] of the way from one to the other.
 	 * Counting the missing crystals as income in every future shaft assumes they keep dropping
 	 * forever, when they stop once all five are carried - that bar ran so high not even a Jasper
 	 * shaft cleared it. Leaving them out entirely ignores that a skip opens corpses sooner, so it mined
 	 * almost everything and collected slowly. Simulated, every share from 0 to 0.5 earned the same
-	 * coins per hour, about 3% over Adaptive; a quarter still mines Jasper with no crystals carried and
+	 * coins per hour, about 3% over Adaptive, so the share only trades mining for collection speed. A quarter still mines Jasper with no crystals carried and
 	 * collects all five corpse crystals in about four fifths of the time.
 	 *
 	 * Adaptive keeps the crystals you really carry. That bar runs high while crystals are missing, which
@@ -247,17 +244,17 @@ object MineshaftValue {
 		priceType: BazaarPriceType,
 		mode: LootMode,
 		crystalsFull: Boolean,
-		openVanguards: Boolean,
+		crystalHuntingShare: Double,
 		lockedCrystals: Set<CrystalType>,
 		coldResistance: Double,
 	): Double? {
-		val carried = Inputs(priceType, mode, crystalsFull, openVanguards, lockedCrystals, coldResistance)
+		val carried = Inputs(priceType, mode, crystalsFull, lockedCrystals, coldResistance)
 		if (mode != LootMode.CRYSTAL_HUNTER) return longRunRate(carried)
-		val steady = longRunRate(Inputs(priceType, mode, crystalsFull = true, openVanguards, CrystalType.entries.toSet(), coldResistance))
+		val steady = longRunRate(Inputs(priceType, mode, crystalsFull = true, CrystalType.entries.toSet(), coldResistance))
 			?: return null
 		if (crystalsFull) return steady
 		val withCrystals = longRunRate(carried) ?: return null
-		return steady + CRYSTAL_HUNTER_SHARE * (withCrystals - steady)
+		return steady + crystalHuntingShare * (withCrystals - steady)
 	}
 
 	private fun longRunRate(inputs: Inputs): Double? {
@@ -276,14 +273,12 @@ object MineshaftValue {
 		val finePrices = GemstoneShaft.entries.associateWith { shaft ->
 			Bazaar.price(shaft.fineGemId)?.let { inputs.priceType.of(it) } ?: return null
 		}
-		val skipRule = skipRule(inputs.mode, inputs.crystalsFull, inputs.openVanguards)
-		val mineRule = mineRule(inputs.mode, inputs.crystalsFull, inputs.openVanguards)
+		val skipRule = skipRule(inputs.mode, inputs.crystalsFull, openVanguards = false)
+		val mineRule = mineRule(inputs.mode, inputs.crystalsFull, openVanguards = false)
 		val minedShare = lootedShare(GEMSTONE_MIX, mineRule)
 		val mixAll = mixValue(GEMSTONE_MIX, mineRule, inputs.priceType, inputs.lockedCrystals) ?: return null
 		val mixSkip = mixValue(GEMSTONE_MIX, skipRule, inputs.priceType, inputs.lockedCrystals) ?: return null
-		// We never stay in a non-gemstone shaft, so its corpses are worth what leaving loots - which
-		// means a Fairy shaft is worth nothing at all on Lapis Only, since it only holds Vanguards.
-		val fairySkip = mixValue(FAIRY_MIX, skipRule, inputs.priceType, inputs.lockedCrystals) ?: return null
+		// We never stay in a non-gemstone shaft, so its corpses are worth what leaving loots.
 		val share = 1.0 / TYPE_COUNT
 		val shaftSeconds = ShaftTime.secondsToFreeze(inputs.coldResistance)
 
@@ -305,8 +300,8 @@ object MineshaftValue {
 					val skip = count * mixSkip
 					total += weight * maxOf(mine - rate * shaftSeconds, skip - rate * SKIP_SECONDS)
 				}
-				// Fairy holds Vanguard corpses; the other four non-gemstone types hold the usual mix.
-				total += weight * (count * fairySkip - rate * SKIP_SECONDS)
+				// Fairy only holds Vanguards, which the bar never counts; the other four hold the usual mix.
+				total -= weight * rate * SKIP_SECONDS
 				total += weight * (NON_GEMSTONE_TYPES - 1) * (count * mixSkip - rate * SKIP_SECONDS)
 			}
 			return total

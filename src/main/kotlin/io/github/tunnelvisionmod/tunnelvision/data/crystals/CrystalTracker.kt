@@ -20,6 +20,13 @@ class CrystalTracker {
 	/** True once every crystal a corpse can drop is carried, so no corpse can drop one any more. */
 	val hasCorpseCrystals: Boolean get() = held.containsAll(CrystalType.CORPSE_DROPS)
 
+	/**
+	 * True once every corpse crystal still missing is one nobody would forge - worth nothing or less at
+	 * [worth]. A crystal whose price is unknown still counts as wanted.
+	 */
+	fun hasCorpseCrystalsWorthHaving(worth: (CrystalType) -> Double?): Boolean =
+		CrystalType.CORPSE_DROPS.all { it in held || worth(it)?.let { coins -> coins <= 0 } == true }
+
 	/** Applies what a source says about the crystals it mentions, in either direction. */
 	fun apply(states: Map<CrystalType, Boolean>) {
 		for ((crystal, carried) in states) {

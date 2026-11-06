@@ -1,6 +1,7 @@
 package io.github.tunnelvisionmod.tunnelvision.data.value
 
 import io.github.tunnelvisionmod.tunnelvision.core.config.ConfigManager
+import io.github.tunnelvisionmod.tunnelvision.core.config.CrystalHuntingSpeed
 import io.github.tunnelvisionmod.tunnelvision.core.events.EventBus
 import io.github.tunnelvisionmod.tunnelvision.core.events.LocationChangedEvent
 import io.github.tunnelvisionmod.tunnelvision.data.crystals.CrystalState
@@ -63,14 +64,23 @@ object ShaftVerdict {
 			priceType = priceType,
 			mode = loot.lootMode,
 			crystalsFull = CrystalState.corpseCrystalsCarried,
-			openVanguards = CorpseValue.opensVanguards(loot.openVanguards, priceType, locked),
+			crystalHuntingShare = loot.crystalHuntingSpeed.share,
 			lockedCrystals = locked,
 			coldResistance = coldResistance,
 			loopColdResistance = ColdResistance.forLoop,
 		)?.also {
 			Debug.log {
-				"ShaftVerdict: ${type.code} ${if (it.shouldMine) "MINE" else "DON'T MINE"}, cold res $coldResistance " +
-					"(learned ${ColdResistance.learned ?: "none"}, mayhem ${MineshaftMayhem.buff ?: "none"}), " +
+				val bars = CrystalHuntingSpeed.entries.joinToString(" / ") { speed ->
+					val rate = MineshaftValue.longRunRate(
+						priceType, loot.lootMode, CrystalState.corpseCrystalsCarried, speed.share, locked, ColdResistance.forLoop,
+					)
+					"${speed.name.lowercase()} ${rate?.let { r -> "%.1fM".format(r * 3600 / 1e6) } ?: "?"}"
+				}
+				"ShaftVerdict: ${type.code} ${if (it.shouldMine) "MINE" else "DON'T MINE"}, " +
+					"shaft %.1fM/h, bar %s (using %s, mode %s, crystals full %s), ".format(
+						it.coinsPerHour / 1e6, bars, loot.crystalHuntingSpeed.name.lowercase(), loot.lootMode, CrystalState.corpseCrystalsCarried,
+					) +
+					"cold res $coldResistance (learned ${ColdResistance.learned ?: "none"}, mayhem ${MineshaftMayhem.buff ?: "none"}), " +
 					"shaft %.1f min".format(ShaftTime.secondsToFreeze(coldResistance) / 60)
 			}
 		}
