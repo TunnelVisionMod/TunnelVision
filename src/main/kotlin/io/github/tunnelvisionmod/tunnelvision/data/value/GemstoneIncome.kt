@@ -4,17 +4,16 @@ import kotlin.math.ceil
 import kotlin.math.max
 
 /**
- * Gemstones fall into five break-time classes. [hardness] turns a mining speed into the ticks one
- * block takes: `ticks = max(4, ceil(hardness / speed - 0.5))`, which reproduces Hypixel's published
- * speed-per-tick table exactly for every class and, unlike the table, also holds below its lowest
- * row. Four ticks is the floor no amount of mining speed gets past.
+ * Gemstones fall into four break-time classes. [hardness] is block strength times 30 and turns a
+ * mining speed into the ticks one block takes: `ticks = max(4, ceil(hardness / speed - 0.5))`, which
+ * reproduces Hypixel's speed-per-tick table (an exact .5 rounds down). Four ticks is the floor no
+ * amount of mining speed gets past.
  */
 enum class GemstoneGroup(val hardness: Int) {
-	RUBY(69_000),
+	RUBY(75_000),
 	SOFT(90_000),
-	TOPAZ(114_000),
-	JASPER(144_000),
-	HARD(156_000);
+	TOPAZ(105_000),
+	HARD(120_000);
 
 	fun ticksPerBlock(miningSpeed: Double): Int = max(MIN_TICKS, ceil(hardness / miningSpeed - 0.5).toInt())
 
