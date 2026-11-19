@@ -24,7 +24,7 @@ enum class GemstoneShaft(private val codePrefix: String, val gemName: String, va
 	JADE("JADE", "Jade", GemstoneGroup.SOFT, 48.9),
 	AMBER("AMBE", "Amber", GemstoneGroup.SOFT, 29.3),
 	TOPAZ("TOPA", "Topaz", GemstoneGroup.TOPAZ, 40.2),
-	JASPER("JASP", "Jasper", GemstoneGroup.JASPER, 27.8),
+	JASPER("JASP", "Jasper", GemstoneGroup.HARD, 27.8),
 	PERIDOT("PERI", "Peridot", GemstoneGroup.HARD, 29.5),
 	CITRINE("CITR", "Citrine", GemstoneGroup.HARD, 28.3),
 	ONYX("ONYX", "Onyx", GemstoneGroup.HARD, 27.3),

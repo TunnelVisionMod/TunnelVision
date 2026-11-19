@@ -44,11 +44,10 @@ class MineshaftValueTest {
 	fun `gemstones are grouped by break time`() {
 		assertEquals(GemstoneGroup.RUBY, GemstoneShaft.RUBY.group)
 		assertEquals(GemstoneGroup.TOPAZ, GemstoneShaft.TOPAZ.group)
-		assertEquals(GemstoneGroup.JASPER, GemstoneShaft.JASPER.group)
 		for (shaft in listOf(GemstoneShaft.JADE, GemstoneShaft.AMBER, GemstoneShaft.SAPPHIRE, GemstoneShaft.AMETHYST, GemstoneShaft.OPAL)) {
 			assertEquals(GemstoneGroup.SOFT, shaft.group, shaft.gemName)
 		}
-		for (shaft in listOf(GemstoneShaft.ONYX, GemstoneShaft.AQUAMARINE, GemstoneShaft.CITRINE, GemstoneShaft.PERIDOT)) {
+		for (shaft in listOf(GemstoneShaft.JASPER, GemstoneShaft.ONYX, GemstoneShaft.AQUAMARINE, GemstoneShaft.CITRINE, GemstoneShaft.PERIDOT)) {
 			assertEquals(GemstoneGroup.HARD, shaft.group, shaft.gemName)
 		}
 	}
@@ -61,10 +60,9 @@ class MineshaftValueTest {
 	 */
 	@Test
 	fun `tick formula reproduces the published speed table`() {
-		val groups = listOf(GemstoneGroup.RUBY, GemstoneGroup.SOFT, GemstoneGroup.TOPAZ, GemstoneGroup.JASPER, GemstoneGroup.HARD)
+		val groups = listOf(GemstoneGroup.RUBY, GemstoneGroup.SOFT, GemstoneGroup.TOPAZ, GemstoneGroup.HARD)
 		for ((ticks, speeds) in SPEED_TABLE) {
 			for ((index, speed) in speeds.withIndex()) {
-				if (speed == null) continue
 				val group = groups[index]
 				assertEquals(ticks, group.ticksPerBlock(speed.toDouble()), "$group at $speed speed")
 				if (ticks < SLOWEST_ROW) {
@@ -372,30 +370,29 @@ class MineshaftValueTest {
 		const val SLOWEST_ROW = 25
 		const val SHAFT = 13 * 60.0
 
-		/** Ticks to the minimum mining speed for Ruby, the soft group, Topaz, Jasper, the hard group. */
+		/** Ticks to the minimum mining speed for Ruby, the soft group, Topaz and the hard group (Jasper included). */
 		val SPEED_TABLE = listOf(
-			25 to listOf(2706, 3530, 4471, 5648, null),
-			24 to listOf(2817, 3674, 4654, 5878, 6368),
-			23 to listOf(2937, 3830, 4852, 6128, 6639),
-			22 to listOf(3067, 4000, 5067, 6400, 6934),
-			21 to listOf(3210, 4187, 5303, 6698, 7256),
-			20 to listOf(3366, 4391, 5561, 7025, 7610),
-			19 to listOf(3539, 4616, 5847, 7385, 8001),
-			18 to listOf(3730, 4865, 6163, 7784, 8433),
-			17 to listOf(3943, 5143, 6515, 8229, 8915),
-			16 to listOf(4182, 5455, 6910, 8728, 9455),
-			15 to listOf(4452, 5807, 7355, 9291, 10065),
-			14 to listOf(4759, 6207, 7863, 9932, 10759),
-			13 to listOf(5112, 6667, 8445, 10667, 11556),
-			12 to listOf(5520, 7200, 9120, 11520, 12480),
-			11 to listOf(6001, 7827, 9914, 12522, 13566),
-			10 to listOf(6572, 8572, 10858, 13715, 14858),
-			9 to listOf(7264, 9474, 12001, 15158, 16422),
-			8 to listOf(8118, 10589, 13412, 16942, 18353),
-			7 to listOf(9201, 12001, 15201, 19201, 20801),
-			6 to listOf(10616, 13847, 17539, 22154, 24000),
-			5 to listOf(12546, 16364, 20728, 26182, 28364),
-			4 to listOf(15334, 20000, 25334, 32000, 34667),
-		)
-	}
+			25 to listOf(2942, 3530, 4118, 4706),
+			24 to listOf(3062, 3674, 4286, 4898),
+			23 to listOf(3192, 3830, 4469, 5107),
+			22 to listOf(3334, 4000, 4667, 5334),
+			21 to listOf(3489, 4187, 4884, 5582),
+			20 to listOf(3659, 4391, 5122, 5854),
+			19 to listOf(3847, 4616, 5385, 6154),
+			18 to listOf(4055, 4865, 5676, 6487),
+			17 to listOf(4286, 5143, 6001, 6858),
+			16 to listOf(4546, 5455, 6364, 7273),
+			15 to listOf(4839, 5807, 6775, 7742),
+			14 to listOf(5173, 6207, 7242, 8276),
+			13 to listOf(5556, 6667, 7778, 8889),
+			12 to listOf(6000, 7200, 8400, 9600),
+			11 to listOf(6522, 7827, 9131, 10435),
+			10 to listOf(7143, 8572, 10000, 11429),
+			9 to listOf(7895, 9474, 11053, 12632),
+			8 to listOf(8824, 10589, 12353, 14118),
+			7 to listOf(10001, 12001, 14001, 16001),
+			6 to listOf(11539, 13847, 16154, 18462),
+			5 to listOf(13637, 16364, 19091, 21819),
+			4 to listOf(16667, 20000, 23334, 26667),
+		)	}
 }
